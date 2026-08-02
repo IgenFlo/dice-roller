@@ -1,0 +1,20 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.app-footer {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  border-top: 1px solid #ccc;
+}
