@@ -3,9 +3,11 @@ export const MAX_DICE_COUNT = 10;
 export const DEFAULT_DICE_COUNT = 1;
 export const FACE_COUNT = 6;
 
+export const INITIAL_FACE_VALUE = 1;
+
 export interface Die {
   readonly id: number;
-  readonly value: number | null;
+  readonly value: number;
   readonly isHeld: boolean;
 }
 
@@ -41,7 +43,7 @@ export function resizeDice(dice: readonly Die[], targetCount: number): Die[] {
 }
 
 function createDie(id: number): Die {
-  return { id, value: null, isHeld: false };
+  return { id, value: INITIAL_FACE_VALUE, isHeld: false };
 }
 
 function clampDiceCount(count: number): number {

@@ -7,7 +7,7 @@ chaque ouverture repart aux paramètres par défaut (1 dé).
 
 ## Comportement
 
-- À l'ouverture, l'interface est directement visible avec 1 dé (jamais lancé, affiché « – »).
+- À l'ouverture, l'interface est directement visible avec 1 dé affichant la face 1.
 - Header : contrôle du nombre de dés (boutons − / +), borné entre 1 et 10.
 - Zone centrale : les dés occupent tout l'espace entre header et footer, centrés.
 - Footer : bouton « Lancer les dés ».
