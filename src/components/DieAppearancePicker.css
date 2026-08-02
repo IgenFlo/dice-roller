@@ -1,0 +1,22 @@
+.die-appearance-picker {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.die-appearance-picker-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.die-appearance-picker-field input {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #111;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
