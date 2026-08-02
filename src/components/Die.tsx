@@ -26,15 +26,16 @@ export function Die({ die, rollCount, onToggleHold, appearance = DEFAULT_DIE_APP
   }
 
   return (
-    <button
-      type="button"
-      className={die.isHeld ? 'die die--held' : 'die'}
-      style={style}
-      aria-pressed={die.isHeld}
-      onClick={() => onToggleHold(die.id)}
-    >
-      <DieFace value={scrambledValue ?? die.value} isRolling={isRolling} />
-      {die.isHeld && <span className="die-status">Bloqué</span>}
-    </button>
+    <div className="die-slot" style={style}>
+      <button
+        type="button"
+        className={die.isHeld ? 'die die--held' : 'die'}
+        aria-pressed={die.isHeld}
+        onClick={() => onToggleHold(die.id)}
+      >
+        <DieFace value={scrambledValue ?? die.value} isRolling={isRolling} />
+      </button>
+      <span className="die-status">{die.isHeld ? 'Bloqué' : ''}</span>
+    </div>
   )
 }

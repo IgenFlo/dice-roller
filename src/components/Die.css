@@ -1,5 +1,11 @@
+.die-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
 .die {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,14 +18,12 @@
 
 .die--held {
   border-width: 5px;
+  border-color: var(--die-pip-color, #111);
 }
 
 .die-status {
-  position: absolute;
-  right: 0;
-  bottom: 4px;
-  left: 0;
-  font-size: 11px;
-  text-align: center;
+  min-height: 15px;
+  font-size: 12px;
+  line-height: 15px;
   text-transform: uppercase;
 }
