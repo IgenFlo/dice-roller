@@ -34,7 +34,7 @@ export function Die({ die, rollCount, onToggleHold, appearance = DEFAULT_DIE_APP
       onClick={() => onToggleHold(die.id)}
     >
       <DieFace value={scrambledValue ?? die.value} isRolling={isRolling} />
-      <span className="die-status">{die.isHeld ? 'Bloqué' : ' '}</span>
+      {die.isHeld && <span className="die-status">Bloqué</span>}
     </button>
   )
 }
