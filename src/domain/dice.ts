@@ -17,7 +17,11 @@ export function createDice(count: number): Die[] {
 }
 
 export function rollDice(dice: readonly Die[], random: RandomSource = Math.random): Die[] {
-  return dice.map(die => (die.isHeld ? die : { ...die, value: rollFace(random) }));
+  return dice.map(die => (die.isHeld ? die : { ...die, value: randomFaceValue(random) }));
+}
+
+export function randomFaceValue(random: RandomSource = Math.random): number {
+  return Math.floor(random() * FACE_COUNT) + 1;
 }
 
 export function toggleHold(dice: readonly Die[], dieId: number): Die[] {
@@ -38,10 +42,6 @@ export function resizeDice(dice: readonly Die[], targetCount: number): Die[] {
 
 function createDie(id: number): Die {
   return { id, value: null, isHeld: false };
-}
-
-function rollFace(random: RandomSource): number {
-  return Math.floor(random() * FACE_COUNT) + 1;
 }
 
 function clampDiceCount(count: number): number {

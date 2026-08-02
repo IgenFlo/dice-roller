@@ -4,15 +4,16 @@ import './DiceGrid.css'
 
 interface DiceGridProps {
   dice: DieModel[]
+  rollCount: number
   onToggleHold: (dieId: number) => void
 }
 
-export function DiceGrid({ dice, onToggleHold }: DiceGridProps) {
+export function DiceGrid({ dice, rollCount, onToggleHold }: DiceGridProps) {
   return (
     <ul className="dice-grid">
       {dice.map(die => (
         <li key={die.id}>
-          <Die die={die} onToggleHold={onToggleHold} />
+          <Die die={die} rollCount={rollCount} onToggleHold={onToggleHold} />
         </li>
       ))}
     </ul>

@@ -1,0 +1,25 @@
+.die-face {
+  width: 64px;
+  height: 64px;
+}
+
+.die-face-pip {
+  fill: var(--die-pip-color, #111);
+}
+
+.die-face--rolling {
+  animation-name: die-face-roll;
+  animation-timing-function: ease-out;
+}
+
+@keyframes die-face-roll {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(360deg) scale(0.8);
+  }
+  100% {
+    transform: rotate(720deg) scale(1);
+  }
+}

@@ -5,13 +5,13 @@ import { useDiceGame } from './hooks/useDiceGame'
 import './App.css'
 
 function App() {
-  const { dice, roll, toggleDieHold, setDiceCount } = useDiceGame()
+  const { dice, rollCount, roll, toggleDieHold, setDiceCount } = useDiceGame()
 
   return (
     <div className="app">
       <Header diceCount={dice.length} onDiceCountChange={setDiceCount} />
       <main className="app-main">
-        <DiceGrid dice={dice} onToggleHold={toggleDieHold} />
+        <DiceGrid dice={dice} rollCount={rollCount} onToggleHold={toggleDieHold} />
       </main>
       <footer className="app-footer">
         <RollButton onRoll={roll} />
