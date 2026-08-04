@@ -26,6 +26,10 @@ export function randomFaceValue(random: RandomSource = Math.random): number {
   return Math.floor(random() * FACE_COUNT) + 1;
 }
 
+export function sumDice(dice: readonly Die[]): number {
+  return dice.reduce((sum, die) => sum + die.value, 0);
+}
+
 export function toggleHold(dice: readonly Die[], dieId: number): Die[] {
   return dice.map(die => (die.id === dieId ? { ...die, isHeld: !die.isHeld } : die));
 }

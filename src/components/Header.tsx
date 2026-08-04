@@ -8,9 +8,16 @@ interface HeaderProps {
   onDiceCountChange: (count: number) => void
   appearance: DieAppearance
   onAppearanceChange: (appearance: DieAppearance) => void
+  onReset: () => void
 }
 
-export function Header({ diceCount, onDiceCountChange, appearance, onAppearanceChange }: HeaderProps) {
+export function Header({
+  diceCount,
+  onDiceCountChange,
+  appearance,
+  onAppearanceChange,
+  onReset,
+}: HeaderProps) {
   return (
     <header className="header">
       <div className="header-group">
@@ -37,6 +44,11 @@ export function Header({ diceCount, onDiceCountChange, appearance, onAppearanceC
       </div>
       <div className="header-group">
         <DieAppearancePicker appearance={appearance} onAppearanceChange={onAppearanceChange} />
+      </div>
+      <div className="header-group">
+        <button type="button" className="header-reset" onClick={onReset}>
+          Réinitialiser
+        </button>
       </div>
     </header>
   )

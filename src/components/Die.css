@@ -9,21 +9,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 96px;
-  height: 96px;
-  border: 2px solid #111;
-  border-radius: 8px;
+  width: var(--die-size, 96px);
+  height: var(--die-size, 96px);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
   background: var(--die-background, #fff);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+@media (hover: hover) {
+  .die:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16);
+  }
+}
+
+.die:active {
+  transform: scale(0.96);
 }
 
 .die--held {
-  border-width: 5px;
-  border-color: var(--die-pip-color, #111);
+  border: 3px solid var(--die-pip-color, #111);
+  box-shadow: none;
 }
 
 .die-status {
   min-height: 15px;
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
   line-height: 15px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
+  color: var(--die-pip-color, #111);
 }

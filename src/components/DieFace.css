@@ -1,6 +1,6 @@
 .die-face {
-  width: 72px;
-  height: 72px;
+  width: calc(var(--die-size, 96px) * 0.75);
+  height: calc(var(--die-size, 96px) * 0.75);
 }
 
 .die-face-pip {
