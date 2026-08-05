@@ -97,9 +97,10 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
   identiques (≥ 3) → paliers `triple` (3), `quad` (4), `quint` (5+).
 - Effets déclenchés à la révélation des valeurs uniquement (fin d'animation 2D,
   résolution 3D), jamais sur l'état initial ni pendant un lancer. Les flammes
-  brûlent ensuite indéfiniment (allumage sur `COMBO_FLAME_FADE_IN_MS`) et ne
-  s'éteignent qu'au lancer suivant, au recentrage/réinitialisation ou lors d'un
-  changement du nombre de dés :
+  brûlent ensuite indéfiniment (allumage sur `COMBO_FLAME_FADE_IN_MS`). Un
+  nouveau lancer ne les éteint que sur les dés relancés : les dés bloqués de la
+  combinaison continuent de brûler (`keepComboOnHeldDice`), au palier obtenu.
+  Extinction complète au « Réinitialiser » et au changement du nombre de dés :
   - triple → flammes jaunes/oranges autour des dés concernés
   - quad → flammes rouges/oranges, plus larges et plus nerveuses
   - quint → flammes bleues + bouquet final feu d'artifice plein écran

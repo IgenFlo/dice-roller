@@ -10,7 +10,12 @@ import { Header } from './components/Header'
 import { RollButton } from './components/RollButton'
 import { RollHistory } from './components/RollHistory'
 import { RollTotal } from './components/RollTotal'
-import { findCombo, forceCombination, type Combo } from './domain/combos'
+import {
+  findCombo,
+  forceCombination,
+  keepComboOnHeldDice,
+  type Combo,
+} from './domain/combos'
 import { setDiceValues, sumDice, type Die } from './domain/dice'
 import { DEFAULT_DIE_APPEARANCE, type DieAppearance } from './domain/dieAppearance'
 import { useDiceGame } from './hooks/useDiceGame'
@@ -41,6 +46,15 @@ function App() {
   // Les flammes brûlent tant que la combinaison reste sur la table.
   const clearComboEffect = () => setComboEffect(null)
 
+  const burnOnHeldDiceOnly = () => {
+    setComboEffect(current => {
+      if (current === null) return null
+      const kept = keepComboOnHeldDice(current.combo, dice)
+      // La clé change pour que la scène 3D réémette sur les seuls dés restants.
+      return kept === null ? null : { combo: kept, key: current.key + 1 }
+    })
+  }
+
   const revealCombo = (resolvedDice: readonly Die[]) => {
     const combo = findCombo(resolvedDice)
     if (combo === null) return
@@ -66,7 +80,7 @@ function App() {
 
   const handleRoll = () => {
     if (isThrowing) return
-    clearComboEffect()
+    burnOnHeldDiceOnly()
     if (animationMode === '2d') {
       roll()
       return

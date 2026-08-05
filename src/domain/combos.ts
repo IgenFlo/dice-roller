@@ -46,6 +46,17 @@ function tierForSize(size: number): ComboTier {
 }
 
 /**
+ * Part de la combinaison portée par les dés bloqués : eux seuls conservent leur
+ * valeur au lancer suivant, donc eux seuls continuent de brûler. Le palier reste
+ * celui de la combinaison obtenue.
+ */
+export function keepComboOnHeldDice(combo: Combo, dice: readonly Die[]): Combo | null {
+  const heldIds = new Set(dice.filter(die => die.isHeld).map(die => die.id));
+  const dieIds = combo.dieIds.filter(dieId => heldIds.has(dieId));
+  return dieIds.length === 0 ? null : { ...combo, dieIds };
+}
+
+/**
  * Valeurs garantissant exactement `comboSize` dés identiques : les dés restants
  * sont répartis sur les autres faces pour ne jamais former un groupe plus grand.
  */
