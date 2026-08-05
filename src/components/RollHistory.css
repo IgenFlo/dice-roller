@@ -1,7 +1,7 @@
 .roll-history {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
 }
 
 .roll-history-title {
@@ -11,13 +11,16 @@
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 .roll-history-list {
+  flex: 1;
+  min-width: 0;
   display: flex;
   gap: 8px;
   margin: 0;
-  padding: 0 0 4px;
+  padding: 0;
   list-style: none;
   overflow-x: auto;
 }
@@ -40,23 +43,43 @@
   color: var(--color-text);
 }
 
+/* Replié, l'historique se réduit à son titre et à ce bouton, poussé à droite. */
+.roll-history-toggle {
+  flex: none;
+  margin-left: auto;
+  min-width: 36px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  transition: background-color 0.15s;
+}
+
+.roll-history-toggle:hover {
+  background: var(--color-bg);
+}
+
 /* En paysage l'historique se réduit à une bande de pastilles : les totaux se
    lisent sans titre, et la hauteur gagnée revient aux dés. */
 @media (orientation: landscape) and (max-height: 560px) {
   .roll-history {
-    gap: 0;
+    gap: 8px;
   }
 
   .roll-history-title {
     display: none;
   }
 
-  .roll-history-list {
-    padding-bottom: 0;
-  }
-
   .roll-history-entry {
     padding: 3px 9px;
     font-size: 11px;
+  }
+
+  .roll-history-toggle {
+    min-height: 26px;
+    padding: 2px 8px;
   }
 }

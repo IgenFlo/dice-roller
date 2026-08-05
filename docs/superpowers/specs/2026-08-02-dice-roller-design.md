@@ -33,7 +33,9 @@ Recherche (FlipSimu, UplUp, DnD Dice Roller, avis d'apps mobiles) → ajouts :
 
 - Total du lancer affiché sous les dés, révélé à la fin de l'animation.
 - Historique de session (20 derniers lancers, valeurs dans l'ordre + total, en mémoire
-  uniquement), le dernier lancer n'apparaissant qu'après l'animation.
+  uniquement), le dernier lancer n'apparaissant qu'après l'animation. Un bouton
+  à l'extrémité droite de la barre le replie ; replié il ne reste que son titre
+  et ce bouton, et la hauteur libérée revient aux dés.
 - Bouton « Réinitialiser » dans le header : dés remis face 1, blocages levés,
   historique vidé ; le nombre de dés et les couleurs sont conservés.
 - Couleurs du dé (fond / points) réglables dans le header, appliquées à tous les dés.
