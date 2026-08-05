@@ -52,6 +52,13 @@ ou les panneaux d'information doit être relue à travers cette liste.
 
 ### 4. Scène 3D
 
+- **La taille apparente des dés en 3D ne vient pas du CSS** mais du cadrage
+  caméra : c'est la profondeur de plateau visible qui la détermine. Un canvas
+  court doit montrer un plateau plat et large, sinon les dés deviennent
+  minuscules. La focale est résolue par dichotomie pour atteindre la profondeur
+  visée (`targetVisibleDepth`), et murs et demi-largeur en découlent par lancer
+  de rayon — ne jamais revenir à une formule fondée sur le seul rapport d'aspect.
+
 - La grille de rangement doit **tenir dans la largeur réelle du plateau** :
   nombre de colonnes puis espacement réduits sur écran étroit, de sorte que les
   dés ne se chevauchent ni ne se repoussent au recentrage.

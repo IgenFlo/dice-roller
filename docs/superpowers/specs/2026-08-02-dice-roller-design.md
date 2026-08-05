@@ -179,6 +179,18 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
 - Les contraintes responsive sont consignées dans `CLAUDE.md` à la racine, à
   vérifier à chaque changement d'interface.
 
+## Itération 9 (2026-08-05) — cadrage 3D adaptatif
+
+- La caméra ne garde plus une focale fixe : `targetVisibleDepth` interpole la
+  profondeur de plateau visible entre 2,8 unités (canvas ≤ 150 px de haut) et
+  14 unités (≥ 520 px), et `fitFieldOfView` résout la focale correspondante par
+  dichotomie. La demi-largeur jouable est mesurée au bord bas (le plus étroit)
+  par lancer de rayon, au lieu d'une formule sur le rapport d'aspect.
+- Effet mesuré : en paysage sur téléphone (canvas 800 × 143), un dé passe de
+  7 px à 34 px de haut à l'écran. Desktop inchangé (29 px), portrait 24 → 27 px.
+- La colonne des dés bloqués se dédouble quand le plateau est trop plat pour les
+  empiler (`heldColumnLayout`), au lieu de les faire se chevaucher.
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).

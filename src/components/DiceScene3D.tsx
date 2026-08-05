@@ -27,8 +27,16 @@ const WALL_VISIBILITY_MARGIN = 0.15
 const MIN_DAMPING = 0.02
 // Colonne des dés bloqués, réservée sur le bord gauche dès qu'un dé est bloqué.
 const HELD_COLUMN_MARGIN = 0.2
-const HELD_COLUMN_WIDTH = DIE_SIZE * 1.7
+const HELD_COLUMN_STEP = DIE_SIZE * 1.35
 const HELD_COLUMN_SPACING = DIE_SIZE * 1.35
+const HELD_MIN_SPACING = DIE_SIZE * 1.05
+// Cadrage : un canvas court doit montrer moins de profondeur, sinon les dés
+// deviennent minuscules. Interpolation entre un plateau plat et large (paysage
+// sur téléphone) et le plateau profond du desktop.
+const SHORT_CANVAS_HEIGHT = 150
+const TALL_CANVAS_HEIGHT = 520
+const SHALLOW_VISIBLE_DEPTH = 2.8
+const DEEP_VISIBLE_DEPTH = 14
 const GRID_SPACING = 1.5
 const GRID_MAX_COLUMNS = 5
 const GRID_MIN_SPACING = DIE_SIZE * 1.05
@@ -192,15 +200,37 @@ interface GridLayout {
   readonly centerX: number
 }
 
+interface HeldColumnLayout {
+  readonly columns: number
+  readonly perColumn: number
+  readonly spacing: number
+}
+
+/** Un plateau peu profond ne peut pas empiler tous les dés bloqués : on ajoute
+ *  alors une colonne plutôt que de les faire se chevaucher. */
+function heldColumnLayout(context: SceneContext, heldCount: number): HeldColumnLayout {
+  const usableDepth =
+    context.walls.front.position.z - context.walls.back.position.z - DIE_SIZE
+  const maxPerColumn = Math.max(1, Math.floor(usableDepth / HELD_MIN_SPACING) + 1)
+  const columns = Math.max(1, Math.ceil(heldCount / maxPerColumn))
+  const perColumn = Math.ceil(heldCount / columns)
+  const spacing =
+    perColumn > 1
+      ? Math.min(HELD_COLUMN_SPACING, usableDepth / (perColumn - 1))
+      : HELD_COLUMN_SPACING
+  return { columns, perColumn, spacing }
+}
+
 function refreshPlayArea(context: SceneContext): void {
-  const reserved = context.heldCount > 0 ? HELD_COLUMN_WIDTH : 0
+  const columns = context.heldCount > 0 ? heldColumnLayout(context, context.heldCount).columns : 0
+  const reserved = columns > 0 ? columns * HELD_COLUMN_STEP + 2 * HELD_COLUMN_MARGIN : 0
   // Sur un écran très étroit, la colonne ne doit pas dévorer toute la zone de jeu.
   const minX = Math.min(-context.halfWidth + reserved, context.halfWidth - DIE_SIZE)
   context.playArea = { minX, maxX: context.halfWidth }
 }
 
-function heldColumnX(context: SceneContext): number {
-  return -context.halfWidth + DIE_SIZE / 2 + HELD_COLUMN_MARGIN
+function heldColumnX(context: SceneContext, column: number): number {
+  return -context.halfWidth + DIE_SIZE / 2 + HELD_COLUMN_MARGIN + column * HELD_COLUMN_STEP
 }
 
 // La grille doit tenir dans la zone de jeu : sur un écran étroit on réduit le
@@ -328,20 +358,18 @@ function restDieAt(sceneDie: SceneDie, value: number, x: number, z: number): voi
 }
 
 function arrangeHeldDice(context: SceneContext, heldDice: readonly Die[]): void {
-  const backZ = context.walls.back.position.z
-  const frontZ = context.walls.front.position.z
-  const centerZ = (backZ + frontZ) / 2
-  const usableDepth = frontZ - backZ - DIE_SIZE
-  const spacing =
-    heldDice.length > 1
-      ? Math.min(HELD_COLUMN_SPACING, usableDepth / (heldDice.length - 1))
-      : HELD_COLUMN_SPACING
+  if (heldDice.length === 0) return
+  const centerZ = (context.walls.back.position.z + context.walls.front.position.z) / 2
+  const { perColumn, spacing } = heldColumnLayout(context, heldDice.length)
 
   heldDice.forEach((die, index) => {
     const sceneDie = context.sceneDice.get(die.id)
     if (sceneDie === undefined) return
-    const z = centerZ + (index - (heldDice.length - 1) / 2) * spacing
-    restDieAt(sceneDie, die.value, heldColumnX(context), z)
+    const column = Math.floor(index / perColumn)
+    const row = index % perColumn
+    const rowsInColumn = Math.min(perColumn, heldDice.length - column * perColumn)
+    const z = centerZ + (row - (rowsInColumn - 1) / 2) * spacing
+    restDieAt(sceneDie, die.value, heldColumnX(context, column), z)
   })
 }
 
@@ -411,6 +439,45 @@ function edgeFloorZ(camera: THREE.PerspectiveCamera, ndcY: number, planeHeight: 
 // premier : le mur du fond s'arrête donc avant le bord haut du canvas.
 function backWallZ(camera: THREE.PerspectiveCamera): number {
   return edgeFloorZ(camera, 1, DIE_SIZE) + DIE_SIZE / 2 + WALL_VISIBILITY_MARGIN
+}
+
+function visibleFloorDepth(camera: THREE.PerspectiveCamera): number {
+  return edgeFloorZ(camera, -1, DIE_SIZE / 2) - edgeFloorZ(camera, 1, DIE_SIZE / 2)
+}
+
+function targetVisibleDepth(canvasHeight: number): number {
+  const span = TALL_CANVAS_HEIGHT - SHORT_CANVAS_HEIGHT
+  const ratio = Math.min(1, Math.max(0, (canvasHeight - SHORT_CANVAS_HEIGHT) / span))
+  return SHALLOW_VISIBLE_DEPTH + (DEEP_VISIBLE_DEPTH - SHALLOW_VISIBLE_DEPTH) * ratio
+}
+
+/**
+ * Champ de vision donnant la profondeur de plateau visée. Résolu par dichotomie :
+ * l'inclinaison de la caméra rend la relation entre focale et profondeur non
+ * linéaire, et quelques itérations coûtent moins qu'une approximation fausse.
+ */
+function fitFieldOfView(camera: THREE.PerspectiveCamera, targetDepth: number): number {
+  let low = 6;
+  let high = 55;
+  for (let step = 0; step < 14; step++) {
+    const middle = (low + high) / 2;
+    camera.fov = middle;
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld();
+    if (visibleFloorDepth(camera) > targetDepth) high = middle;
+    else low = middle;
+  }
+  return (low + high) / 2;
+}
+
+/** Demi-largeur au bord bas du plateau, le plus étroit : tout y reste visible. */
+function visibleHalfWidth(camera: THREE.PerspectiveCamera): number {
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(new THREE.Vector2(1, -1), camera);
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -DIE_SIZE / 2);
+  const intersection = new THREE.Vector3();
+  const hit = raycaster.ray.intersectPlane(plane, intersection);
+  return hit === null ? AREA_DEPTH / 2 : Math.max(DIE_SIZE, Math.abs(intersection.x));
 }
 
 function bodyQuaternion(body: CANNON.Body): THREE.Quaternion {
@@ -598,9 +665,10 @@ export function DiceScene3D({
       if (width === 0 || height === 0) return
       renderer.setSize(width, height, false)
       camera.aspect = width / height
+      camera.fov = fitFieldOfView(camera, targetVisibleDepth(height))
       camera.updateProjectionMatrix()
       camera.updateMatrixWorld()
-      context.halfWidth = Math.min(MAX_HALF_WIDTH, (AREA_DEPTH / 2) * camera.aspect * 0.85)
+      context.halfWidth = Math.min(MAX_HALF_WIDTH, visibleHalfWidth(camera))
       walls.left.position.set(-context.halfWidth, 0, 0)
       walls.right.position.set(context.halfWidth, 0, 0)
       walls.back.position.set(0, 0, backWallZ(camera))
