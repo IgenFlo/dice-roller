@@ -77,6 +77,16 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
 - Faces opposées des cubes 3D somment à 7 ; disposition partagée des points dans
   `src/domain/dieFaces.ts` (SVG 2D et textures 3D).
 
+## Itération 5 (2026-08-05) — lisibilité du lancer 3D
+
+- Un dé bloqué porte un cadenas flottant au-dessus de lui (sprite billboardé
+  teinté de la couleur des points), à la place de l'anneau au sol.
+- Le résultat n'est validé que si TOUS les dés lancés sont immobiles ET lisibles :
+  face supérieure quasi horizontale (`alignment > 0.96`) et posée au sol
+  (`y < 0.85 × taille du dé`, donc pas en équilibre sur un autre dé).
+- Un dé « cassé » (de travers, empilé, ou encore en mouvement) est automatiquement
+  relancé au bout de 5 s ; le délai repart à zéro à chaque relance.
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).

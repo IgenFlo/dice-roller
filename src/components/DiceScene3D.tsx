@@ -3,7 +3,7 @@ import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { createDieMaterials, disposeDieMaterials } from '../animation/threeDice/diceMaterials'
-import { getUpFaceValue, quaternionForValueUp } from '../animation/threeDice/dieOrientation'
+import { getUpFace, quaternionForValueUp } from '../animation/threeDice/dieOrientation'
 import type { ThrowSettings } from '../animation/throwSettings'
 import type { Die } from '../domain/dice'
 import type { DieAppearance } from '../domain/dieAppearance'
@@ -18,10 +18,14 @@ const CAMERA_FOV = 45
 const SETTLE_LINEAR_SPEED = 0.15
 const SETTLE_ANGULAR_SPEED = 0.2
 const SETTLE_FRAMES = 18
-const MAX_THROW_DURATION_MS = 5000
+const COCKED_RETHROW_DELAY_MS = 5000
+const FLAT_ALIGNMENT_MIN = 0.96
+const ON_FLOOR_MAX_Y = DIE_SIZE * 0.85
 const GRID_SPACING = 1.5
 const GRID_COLUMNS = 5
 const AURA_DURATION_MS = 1200
+const LOCK_SPRITE_SIZE = 0.62
+const LOCK_HEIGHT_ABOVE_DIE = 0.85
 
 interface DiceScene3DProps {
   dice: Die[]
@@ -37,7 +41,7 @@ interface DiceScene3DProps {
 interface SceneDie {
   id: number
   mesh: THREE.Mesh
-  ring: THREE.Mesh
+  lock: THREE.Sprite
   body: CANNON.Body
 }
 
@@ -58,7 +62,7 @@ interface SceneContext {
   camera: THREE.PerspectiveCamera
   world: CANNON.World
   dieGeometry: THREE.BufferGeometry
-  ringGeometry: THREE.RingGeometry
+  lockTexture: THREE.CanvasTexture
   diceMaterial: CANNON.Material
   contactMaterials: CANNON.ContactMaterial[]
   walls: { left: CANNON.Body; right: CANNON.Body; back: CANNON.Body; front: CANNON.Body }
@@ -83,6 +87,32 @@ function createAuraTexture(): THREE.CanvasTexture {
     context.fillRect(0, 0, 128, 128)
   }
   return new THREE.CanvasTexture(canvas)
+}
+
+function createLockTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = 128
+  canvas.height = 128
+  const context = canvas.getContext('2d')
+  if (context !== null) {
+    context.strokeStyle = '#ffffff'
+    context.fillStyle = '#ffffff'
+    context.lineWidth = 13
+    context.beginPath()
+    context.arc(64, 54, 21, Math.PI, 2 * Math.PI)
+    context.stroke()
+    context.beginPath()
+    context.roundRect(30, 54, 68, 54, 10)
+    context.fill()
+    context.globalCompositeOperation = 'destination-out'
+    context.beginPath()
+    context.arc(64, 74, 8, 0, Math.PI * 2)
+    context.fill()
+    context.fillRect(60, 74, 8, 18)
+  }
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
 }
 
 function spawnAura(context: SceneContext, position: CANNON.Vec3, color: string): void {
@@ -149,11 +179,50 @@ function topEdgeFloorZ(camera: THREE.PerspectiveCamera): number {
   return hit === null ? -AREA_DEPTH / 2 : intersection.z
 }
 
+function bodyQuaternion(body: CANNON.Body): THREE.Quaternion {
+  return new THREE.Quaternion(
+    body.quaternion.x,
+    body.quaternion.y,
+    body.quaternion.z,
+    body.quaternion.w,
+  )
+}
+
 function isBodyCalm(body: CANNON.Body): boolean {
   return (
     body.velocity.length() < SETTLE_LINEAR_SPEED &&
     body.angularVelocity.length() < SETTLE_ANGULAR_SPEED
   )
+}
+
+// Un dé « cassé » repose de travers ou sur un autre dé : sa valeur n'est pas lisible.
+function isDieReadable(body: CANNON.Body): boolean {
+  return (
+    getUpFace(bodyQuaternion(body)).alignment > FLAT_ALIGNMENT_MIN &&
+    body.position.y < ON_FLOOR_MAX_Y
+  )
+}
+
+function launchDie(context: SceneContext, body: CANNON.Body, settings: ThrowSettings): void {
+  body.type = CANNON.Body.DYNAMIC
+  body.linearDamping = 0.05 * settings.friction
+  body.angularDamping = 0.08 * settings.friction
+  body.position.set(
+    (Math.random() - 0.5) * context.halfWidth * 1.2,
+    1.2 + Math.random() * 1.5,
+    AREA_DEPTH / 2 - 0.9,
+  )
+  body.velocity.set(
+    (Math.random() - 0.5) * 6 * settings.launchPower,
+    (3.5 + Math.random() * 3) * settings.launchPower,
+    -(9 + Math.random() * 5) * settings.launchPower,
+  )
+  body.angularVelocity.set(
+    (Math.random() - 0.5) * 24,
+    (Math.random() - 0.5) * 24,
+    (Math.random() - 0.5) * 24,
+  )
+  body.wakeUp()
 }
 
 export function DiceScene3D({
@@ -266,7 +335,7 @@ export function DiceScene3D({
       camera,
       world,
       dieGeometry: new RoundedBoxGeometry(DIE_SIZE, DIE_SIZE, DIE_SIZE, 4, 0.14),
-      ringGeometry: new THREE.RingGeometry(0.75, 0.92, 32),
+      lockTexture: createLockTexture(),
       diceMaterial,
       contactMaterials,
       walls,
@@ -320,7 +389,7 @@ export function DiceScene3D({
       world.step(1 / 60, deltaSeconds, 3)
 
       for (const sceneDie of context.sceneDice.values()) {
-        const { body, mesh, ring } = sceneDie
+        const { body, mesh, lock } = sceneDie
         mesh.position.set(body.position.x, body.position.y, body.position.z)
         mesh.quaternion.set(
           body.quaternion.x,
@@ -328,36 +397,28 @@ export function DiceScene3D({
           body.quaternion.z,
           body.quaternion.w,
         )
-        ring.position.set(body.position.x, 0.02, body.position.z)
+        lock.position.set(
+          body.position.x,
+          body.position.y + LOCK_HEIGHT_ABOVE_DIE,
+          body.position.z,
+        )
       }
 
       const activeThrow = context.activeThrow
       if (activeThrow !== null) {
-        const bodies = activeThrow.ids
-          .map(id => context.sceneDice.get(id)?.body)
-          .filter(body => body !== undefined)
-        const calm = bodies.every(isBodyCalm)
-        const timedOut = now - activeThrow.startedAt > MAX_THROW_DURATION_MS
-        activeThrow.settledFrames = calm ? activeThrow.settledFrames + 1 : 0
-        if (activeThrow.settledFrames >= SETTLE_FRAMES || timedOut) {
-          if (timedOut) {
-            for (const body of bodies) {
-              body.velocity.setZero()
-              body.angularVelocity.setZero()
-            }
-          }
+        const unreadableIds = activeThrow.ids.filter(id => {
+          const body = context.sceneDice.get(id)?.body
+          return body !== undefined && !(isBodyCalm(body) && isDieReadable(body))
+        })
+        activeThrow.settledFrames = unreadableIds.length === 0 ? activeThrow.settledFrames + 1 : 0
+
+        if (activeThrow.settledFrames >= SETTLE_FRAMES) {
           context.activeThrow = null
           skipNextValueSyncRef.current = true
           const entries: [number, number][] = activeThrow.ids.flatMap(id => {
             const sceneDie = context.sceneDice.get(id)
             if (sceneDie === undefined) return []
-            const quaternion = new THREE.Quaternion(
-              sceneDie.body.quaternion.x,
-              sceneDie.body.quaternion.y,
-              sceneDie.body.quaternion.z,
-              sceneDie.body.quaternion.w,
-            )
-            return [[id, getUpFaceValue(quaternion)]]
+            return [[id, getUpFace(bodyQuaternion(sceneDie.body)).value]]
           })
           for (const [id, value] of entries) {
             const sceneDie = context.sceneDice.get(id)
@@ -366,6 +427,13 @@ export function DiceScene3D({
             }
           }
           onRollResolvedRef.current(Object.fromEntries(entries))
+        } else if (now - activeThrow.startedAt > COCKED_RETHROW_DELAY_MS) {
+          for (const id of unreadableIds) {
+            const body = context.sceneDice.get(id)?.body
+            if (body !== undefined) launchDie(context, body, settingsRef.current)
+          }
+          activeThrow.startedAt = now
+          activeThrow.settledFrames = 0
         }
       }
 
@@ -387,14 +455,15 @@ export function DiceScene3D({
             ),
           )
         }
+        sceneDie.lock.material.dispose()
       }
       for (const aura of context.activeAuras) {
         context.scene.remove(aura.sprite)
         aura.sprite.material.dispose()
       }
       context.auraTexture.dispose()
+      context.lockTexture.dispose()
       context.dieGeometry.dispose()
-      context.ringGeometry.dispose()
       renderer.dispose()
       container.removeChild(renderer.domElement)
       contextRef.current = null
@@ -407,14 +476,14 @@ export function DiceScene3D({
     if (context === null) return
 
     for (const sceneDie of context.sceneDice.values()) {
-      context.scene.remove(sceneDie.mesh, sceneDie.ring)
+      context.scene.remove(sceneDie.mesh, sceneDie.lock)
       context.world.removeBody(sceneDie.body)
       if (Array.isArray(sceneDie.mesh.material)) {
         disposeDieMaterials(
           sceneDie.mesh.material.filter(material => material instanceof THREE.MeshStandardMaterial),
         )
       }
-      if (sceneDie.ring.material instanceof THREE.Material) sceneDie.ring.material.dispose()
+      sceneDie.lock.material.dispose()
     }
     context.sceneDice.clear()
 
@@ -424,15 +493,16 @@ export function DiceScene3D({
       mesh.castShadow = true
       mesh.userData.dieId = die.id
 
-      const ring = new THREE.Mesh(
-        context.ringGeometry,
-        new THREE.MeshBasicMaterial({
+      const lock = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: context.lockTexture,
           color: appearanceRef.current.pipColor,
-          side: THREE.DoubleSide,
+          transparent: true,
+          depthWrite: false,
         }),
       )
-      ring.rotation.x = -Math.PI / 2
-      ring.visible = die.isHeld
+      lock.scale.set(LOCK_SPRITE_SIZE, LOCK_SPRITE_SIZE, 1)
+      lock.visible = die.isHeld
 
       const body = new CANNON.Body({
         mass: 1,
@@ -445,9 +515,9 @@ export function DiceScene3D({
       const orientation = quaternionForValueUp(die.value)
       body.quaternion.set(orientation.x, orientation.y, orientation.z, orientation.w)
 
-      context.scene.add(mesh, ring)
+      context.scene.add(mesh, lock)
       context.world.addBody(body)
-      context.sceneDice.set(die.id, { id: die.id, mesh, ring, body })
+      context.sceneDice.set(die.id, { id: die.id, mesh, lock, body })
     })
   }, [diceIdsKey])
 
@@ -477,7 +547,7 @@ export function DiceScene3D({
     for (const die of diceRef.current) {
       const sceneDie = context.sceneDice.get(die.id)
       if (sceneDie === undefined) continue
-      sceneDie.ring.visible = die.isHeld
+      sceneDie.lock.visible = die.isHeld
       sceneDie.body.type = die.isHeld ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC
       sceneDie.body.velocity.setZero()
       sceneDie.body.angularVelocity.setZero()
@@ -495,9 +565,7 @@ export function DiceScene3D({
           oldMaterials.filter(material => material instanceof THREE.MeshStandardMaterial),
         )
       }
-      if (sceneDie.ring.material instanceof THREE.MeshBasicMaterial) {
-        sceneDie.ring.material.color.set(appearance.pipColor)
-      }
+      sceneDie.lock.material.color.set(appearance.pipColor)
     }
   }, [appearance])
 
@@ -520,26 +588,7 @@ export function DiceScene3D({
       if (sceneDie === undefined) continue
 
       thrownIds.push(die.id)
-      const { body } = sceneDie
-      body.type = CANNON.Body.DYNAMIC
-      body.linearDamping = 0.05 * throwSettings.friction
-      body.angularDamping = 0.08 * throwSettings.friction
-      body.position.set(
-        (Math.random() - 0.5) * context.halfWidth * 1.2,
-        1.2 + Math.random() * 1.5,
-        AREA_DEPTH / 2 - 0.9,
-      )
-      body.velocity.set(
-        (Math.random() - 0.5) * 6 * throwSettings.launchPower,
-        (3.5 + Math.random() * 3) * throwSettings.launchPower,
-        -(9 + Math.random() * 5) * throwSettings.launchPower,
-      )
-      body.angularVelocity.set(
-        (Math.random() - 0.5) * 24,
-        (Math.random() - 0.5) * 24,
-        (Math.random() - 0.5) * 24,
-      )
-      body.wakeUp()
+      launchDie(context, sceneDie.body, throwSettings)
     }
 
     if (thrownIds.length === 0) {

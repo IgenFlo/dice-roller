@@ -15,17 +15,23 @@ const LOCAL_FACE_NORMALS: readonly THREE.Vector3[] = [
   new THREE.Vector3(0, 0, -1),
 ];
 
-export function getUpFaceValue(quaternion: THREE.Quaternion): number {
-  let bestValue: number = FACE_VALUES[0];
-  let bestAlignment = -Infinity;
+export interface UpFace {
+  readonly value: number;
+  /** 1 = face parfaitement horizontale, ~0.71 = dé posé sur une arête. */
+  readonly alignment: number;
+}
+
+export function getUpFace(quaternion: THREE.Quaternion): UpFace {
+  let value: number = FACE_VALUES[0];
+  let alignment = -Infinity;
   LOCAL_FACE_NORMALS.forEach((normal, index) => {
-    const alignment = normal.clone().applyQuaternion(quaternion).dot(UP);
-    if (alignment > bestAlignment) {
-      bestAlignment = alignment;
-      bestValue = FACE_VALUES[index];
+    const candidate = normal.clone().applyQuaternion(quaternion).dot(UP);
+    if (candidate > alignment) {
+      alignment = candidate;
+      value = FACE_VALUES[index];
     }
   });
-  return bestValue;
+  return { value, alignment };
 }
 
 export function quaternionForValueUp(value: number): THREE.Quaternion {
