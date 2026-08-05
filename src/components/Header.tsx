@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { AnimationMode, ThrowSettings } from '../animation/throwSettings'
 import { TESTABLE_COMBO_SIZES } from '../domain/combos'
 import { MAX_DICE_COUNT, MIN_DICE_COUNT } from '../domain/dice'
@@ -35,77 +36,96 @@ export function Header({
   onThrowSettingsChange,
   onForceCombination,
 }: HeaderProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
   return (
     <header className="header">
-      <div className="header-group">
-        <span className="header-label">Nombre de dés</span>
-        <div className="header-counter">
-          <button
-            type="button"
-            aria-label="Retirer un dé"
-            disabled={controlsDisabled || diceCount <= MIN_DICE_COUNT}
-            onClick={() => onDiceCountChange(diceCount - 1)}
-          >
-            −
-          </button>
-          <span className="header-count">{diceCount}</span>
-          <button
-            type="button"
-            aria-label="Ajouter un dé"
-            disabled={controlsDisabled || diceCount >= MAX_DICE_COUNT}
-            onClick={() => onDiceCountChange(diceCount + 1)}
-          >
-            +
-          </button>
-        </div>
-      </div>
-      <div className="header-group">
-        <DieAppearancePicker appearance={appearance} onAppearanceChange={onAppearanceChange} />
-      </div>
-      <div className="header-group">
-        <details className="header-settings" name="header-panel">
-          <summary>Animation</summary>
-          <div className="header-settings-panel">
-            <AnimationSettings
-              mode={animationMode}
-              onModeChange={onAnimationModeChange}
-              settings={throwSettings}
-              onSettingsChange={onThrowSettingsChange}
-              modeChangeDisabled={controlsDisabled}
-            />
-          </div>
-        </details>
-        <details className="header-settings" name="header-panel">
-          <summary>Tests</summary>
-          <div className="header-settings-panel">
-            <span className="header-tests-label">Forcer une combinaison</span>
-            <div className="header-tests-buttons">
-              {TESTABLE_COMBO_SIZES.map(comboSize => (
-                <button
-                  key={comboSize}
-                  type="button"
-                  className="header-reset"
-                  disabled={controlsDisabled || diceCount < comboSize}
-                  onClick={() => onForceCombination(comboSize)}
-                >
-                  {comboSize} identiques
-                </button>
-              ))}
+      <button
+        type="button"
+        className="header-toggle"
+        aria-expanded={isExpanded}
+        onClick={() => setIsExpanded(expanded => !expanded)}
+      >
+        {isExpanded ? 'Masquer les réglages' : 'Réglages'}
+        <span className="header-toggle-caret" aria-hidden="true">
+          {isExpanded ? '▴' : '▾'}
+        </span>
+      </button>
+
+      {isExpanded && (
+        <>
+          <div className="header-group">
+            <span className="header-label">Nombre de dés</span>
+            <div className="header-counter">
+              <button
+                type="button"
+                aria-label="Retirer un dé"
+                disabled={controlsDisabled || diceCount <= MIN_DICE_COUNT}
+                onClick={() => onDiceCountChange(diceCount - 1)}
+              >
+                −
+              </button>
+              <span className="header-count">{diceCount}</span>
+              <button
+                type="button"
+                aria-label="Ajouter un dé"
+                disabled={controlsDisabled || diceCount >= MAX_DICE_COUNT}
+                onClick={() => onDiceCountChange(diceCount + 1)}
+              >
+                +
+              </button>
             </div>
           </div>
-        </details>
-        <button
-          type="button"
-          className="header-reset"
-          disabled={controlsDisabled}
-          onClick={onRecenter}
-        >
-          Recentrer
-        </button>
-        <button type="button" className="header-reset" disabled={controlsDisabled} onClick={onReset}>
-          Réinitialiser
-        </button>
-      </div>
+          <div className="header-group">
+            <DieAppearancePicker appearance={appearance} onAppearanceChange={onAppearanceChange} />
+          </div>
+          <div className="header-group">
+            <details className="header-settings" name="header-panel">
+              <summary>Animation</summary>
+              <div className="header-settings-panel">
+                <AnimationSettings
+                  mode={animationMode}
+                  onModeChange={onAnimationModeChange}
+                  settings={throwSettings}
+                  onSettingsChange={onThrowSettingsChange}
+                  modeChangeDisabled={controlsDisabled}
+                />
+              </div>
+            </details>
+            <details className="header-settings" name="header-panel">
+              <summary>Tests</summary>
+              <div className="header-settings-panel">
+                <span className="header-tests-label">Forcer une combinaison</span>
+                <div className="header-tests-buttons">
+                  {TESTABLE_COMBO_SIZES.map(comboSize => (
+                    <button
+                      key={comboSize}
+                      type="button"
+                      className="header-reset"
+                      disabled={controlsDisabled || diceCount < comboSize}
+                      onClick={() => onForceCombination(comboSize)}
+                    >
+                      {comboSize} identiques
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </details>
+            <button
+              type="button"
+              className="header-reset"
+              disabled={controlsDisabled}
+              onClick={onReset}
+            >
+              Réinitialiser
+            </button>
+          </div>
+        </>
+      )}
+
+      <button type="button" className="header-reset" disabled={controlsDisabled} onClick={onRecenter}>
+        Recentrer
+      </button>
     </header>
   )
 }

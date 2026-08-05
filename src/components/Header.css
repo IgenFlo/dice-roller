@@ -11,6 +11,28 @@
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
+.header-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  font-size: 14px;
+  color: var(--color-text-muted);
+  transition: background-color 0.15s;
+}
+
+.header-toggle:hover {
+  background: var(--color-bg);
+}
+
+.header-toggle-caret {
+  font-size: 11px;
+  line-height: 1;
+}
+
 .header-settings summary {
   list-style: none;
   padding: 10px 14px;

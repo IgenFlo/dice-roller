@@ -8,7 +8,10 @@ chaque ouverture repart aux paramètres par défaut (1 dé).
 ## Comportement
 
 - À l'ouverture, l'interface est directement visible avec 1 dé affichant la face 1.
-- Header : contrôle du nombre de dés (boutons − / +), borné entre 1 et 10.
+- Header repliable, replié par défaut : ne montrent alors que le bouton
+  « Réglages » et « Recentrer ». Déplié, il affiche tous les contrôles
+  (nombre de dés, couleurs, panneaux Animation et Tests, Réinitialiser).
+- Contrôle du nombre de dés (boutons − / +), borné entre 1 et 10.
 - Zone centrale : les dés occupent tout l'espace entre header et footer, centrés.
 - Footer : bouton « Lancer les dés ».
 - Cliquer sur un dé bascule son blocage ; un dé bloqué n'est pas relancé.
