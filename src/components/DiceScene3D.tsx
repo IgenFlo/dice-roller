@@ -7,6 +7,7 @@ import { getUpFaceValue, quaternionForValueUp } from '../animation/threeDice/die
 import type { ThrowSettings } from '../animation/throwSettings'
 import type { Die } from '../domain/dice'
 import type { DieAppearance } from '../domain/dieAppearance'
+import { AURA_FACE_VALUE } from '../domain/dieFaces'
 import './DiceScene3D.css'
 
 const AREA_DEPTH = 8
@@ -20,6 +21,7 @@ const SETTLE_FRAMES = 18
 const MAX_THROW_DURATION_MS = 5000
 const GRID_SPACING = 1.5
 const GRID_COLUMNS = 5
+const AURA_DURATION_MS = 1200
 
 interface DiceScene3DProps {
   dice: Die[]
@@ -45,6 +47,11 @@ interface ActiveThrow {
   startedAt: number
 }
 
+interface ActiveAura {
+  sprite: THREE.Sprite
+  startedAt: number
+}
+
 interface SceneContext {
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
@@ -58,6 +65,53 @@ interface SceneContext {
   sceneDice: Map<number, SceneDie>
   halfWidth: number
   activeThrow: ActiveThrow | null
+  auraTexture: THREE.CanvasTexture
+  activeAuras: ActiveAura[]
+}
+
+function createAuraTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = 128
+  canvas.height = 128
+  const context = canvas.getContext('2d')
+  if (context !== null) {
+    const gradient = context.createRadialGradient(64, 64, 10, 64, 64, 64)
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)')
+    gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.35)')
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+    context.fillStyle = gradient
+    context.fillRect(0, 0, 128, 128)
+  }
+  return new THREE.CanvasTexture(canvas)
+}
+
+function spawnAura(context: SceneContext, position: CANNON.Vec3, color: string): void {
+  const material = new THREE.SpriteMaterial({
+    map: context.auraTexture,
+    color,
+    transparent: true,
+    depthWrite: false,
+  })
+  const sprite = new THREE.Sprite(material)
+  sprite.position.set(position.x, position.y + 0.1, position.z)
+  sprite.scale.set(1.8, 1.8, 1)
+  context.scene.add(sprite)
+  context.activeAuras.push({ sprite, startedAt: performance.now() })
+}
+
+function advanceAuras(context: SceneContext, now: number): void {
+  context.activeAuras = context.activeAuras.filter(aura => {
+    const progress = (now - aura.startedAt) / AURA_DURATION_MS
+    if (progress >= 1) {
+      context.scene.remove(aura.sprite)
+      aura.sprite.material.dispose()
+      return false
+    }
+    const spread = 1.8 + progress * 1.6
+    aura.sprite.scale.set(spread, spread, 1)
+    aura.sprite.material.opacity = 1 - progress
+    return true
+  })
 }
 
 function gridPosition(index: number, count: number): { x: number; z: number } {
@@ -208,6 +262,8 @@ export function DiceScene3D({
       sceneDice: new Map(),
       halfWidth: AREA_DEPTH / 2,
       activeThrow: null,
+      auraTexture: createAuraTexture(),
+      activeAuras: [],
     }
     contextRef.current = context
 
@@ -279,23 +335,28 @@ export function DiceScene3D({
           }
           context.activeThrow = null
           skipNextValueSyncRef.current = true
-          const values = Object.fromEntries(
-            activeThrow.ids.flatMap(id => {
-              const sceneDie = context.sceneDice.get(id)
-              if (sceneDie === undefined) return []
-              const quaternion = new THREE.Quaternion(
-                sceneDie.body.quaternion.x,
-                sceneDie.body.quaternion.y,
-                sceneDie.body.quaternion.z,
-                sceneDie.body.quaternion.w,
-              )
-              return [[id, getUpFaceValue(quaternion)]]
-            }),
-          )
-          onRollResolvedRef.current(values)
+          const entries: [number, number][] = activeThrow.ids.flatMap(id => {
+            const sceneDie = context.sceneDice.get(id)
+            if (sceneDie === undefined) return []
+            const quaternion = new THREE.Quaternion(
+              sceneDie.body.quaternion.x,
+              sceneDie.body.quaternion.y,
+              sceneDie.body.quaternion.z,
+              sceneDie.body.quaternion.w,
+            )
+            return [[id, getUpFaceValue(quaternion)]]
+          })
+          for (const [id, value] of entries) {
+            const sceneDie = context.sceneDice.get(id)
+            if (value === AURA_FACE_VALUE && sceneDie !== undefined) {
+              spawnAura(context, sceneDie.body.position, appearanceRef.current.pipColor)
+            }
+          }
+          onRollResolvedRef.current(Object.fromEntries(entries))
         }
       }
 
+      advanceAuras(context, now)
       renderer.render(scene, camera)
       frameId = requestAnimationFrame(tick)
     }
@@ -314,6 +375,11 @@ export function DiceScene3D({
           )
         }
       }
+      for (const aura of context.activeAuras) {
+        context.scene.remove(aura.sprite)
+        aura.sprite.material.dispose()
+      }
+      context.auraTexture.dispose()
       context.dieGeometry.dispose()
       context.ringGeometry.dispose()
       renderer.dispose()

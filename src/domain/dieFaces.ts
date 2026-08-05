@@ -19,3 +19,5 @@ export const PIP_LAYOUTS: Readonly<Record<number, readonly PipPosition[]>> = {
 };
 
 export const PIP_RADIUS = 9;
+
+export const AURA_FACE_VALUE = 6;

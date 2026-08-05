@@ -11,6 +11,7 @@
 }
 
 .die {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -37,6 +38,29 @@
 .die--held {
   border: 3px solid var(--die-pip-color, #111);
   box-shadow: none;
+}
+
+.die-slot--aura .die::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 20px;
+  box-shadow: 0 0 26px 12px var(--die-pip-color, #111);
+  opacity: 0;
+  animation: die-aura 1.2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes die-aura {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .die-status {

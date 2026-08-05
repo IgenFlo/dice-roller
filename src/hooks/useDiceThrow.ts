@@ -9,10 +9,13 @@ import {
 } from '../animation/diceThrowPhysics'
 import type { ThrowSettings } from '../animation/throwSettings'
 import { randomFaceValue, type Die } from '../domain/dice'
+import { AURA_FACE_VALUE } from '../domain/dieFaces'
 
 const MAX_THROW_DURATION_S = 2.5
 const MAX_FRAME_DELTA_S = 0.032
 const RECENTER_DURATION_MS = 400
+// Légèrement au-delà de l'animation CSS die-aura (1.2s) pour ne pas la couper.
+const AURA_CLASS_RESET_MS = 1300
 const TUMBLE_LINEAR_DIVISOR = 260
 const TUMBLE_ANGULAR_DIVISOR = 420
 
@@ -133,6 +136,15 @@ export function useDiceThrow(
         delete next[state.id]
         return next
       })
+
+      const revealedValue = diceRef.current.find(die => die.id === state.id)?.value
+      if (revealedValue === AURA_FACE_VALUE) {
+        slot.element.classList.add('die-slot--aura')
+        window.setTimeout(
+          () => slot.element.classList.remove('die-slot--aura'),
+          AURA_CLASS_RESET_MS,
+        )
+      }
     }
 
     const tick = (now: number) => {
