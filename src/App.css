@@ -14,7 +14,11 @@
   padding: 24px 16px 12px;
 }
 
+/* Les bandeaux Yam's occupent les bords : la largeur qu'ils réservent est prise
+   en padding pour que dés et canvas 3D ne passent jamais dessous. */
 .app-dice-area {
+  --yams-rail-width: 104px;
+
   position: relative;
   flex: 1;
   min-height: 0;
@@ -23,16 +27,7 @@
   align-items: center;
   justify-content: center;
   gap: 28px;
-}
-
-/* Total, analyse Yam's et historique : ce bloc cède la place aux dés et défile
-   plutôt que d'être tronqué. */
-.app-side {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 0;
-  overflow-y: auto;
+  padding-inline: var(--yams-rail-width);
 }
 
 .app-scene-fallback {
@@ -55,29 +50,24 @@
   }
 
   .app-dice-area {
+    --yams-rail-width: 68px;
+
     gap: 20px;
   }
 }
 
-/* Paysage sur téléphone : la hauteur est la ressource rare, on répartit donc
-   les dés et les informations sur la largeur. */
+/* Paysage sur téléphone : la hauteur est la ressource rare, tout est compacté
+   pour que header, dés et footer tiennent ensemble. */
 @media (orientation: landscape) and (max-height: 560px) {
   .app-main {
-    flex-direction: row;
-    align-items: stretch;
-    gap: 12px;
+    gap: 8px;
     padding: 8px 12px;
   }
 
   .app-dice-area {
-    flex: 1 1 auto;
-    min-width: 0;
-    gap: 10px;
-  }
+    --yams-rail-width: 92px;
 
-  .app-side {
-    flex: 0 0 clamp(190px, 32%, 320px);
-    gap: 8px;
+    gap: 10px;
   }
 
   .app-scene-fallback {

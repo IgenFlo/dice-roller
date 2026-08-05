@@ -161,9 +161,12 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
 - `#root` en `height: 100svh` + `overflow: hidden` : header, zone de dés et
   footer tiennent ensemble dans l'écran, la zone de dés absorbe l'espace restant
   et le bloc latéral défile.
-- En paysage court (`orientation: landscape` et `max-height: 560px`), `.app-main`
-  passe en deux colonnes : dés à gauche, total/Yam's/historique à droite. Header,
+- En paysage court (`orientation: landscape` et `max-height: 560px`), header,
   footer, dés, bouton de lancer et pastilles sont compactés.
+- L'analyse Yam's est passée en deux bandeaux discrets aux bords de la zone de
+  dés (tirage courant à gauche, probabilités à droite). Leur largeur est réservée
+  en `padding-inline`, donc ils ne recouvrent ni les dés ni le canvas 3D :
+  104 px sur desktop, 68 px sous 700 px de large, 92 px en paysage court.
 - Taille des dés dégressive : 96 px → 68 px (largeur ≤ 700 px) → 60 px
   (hauteur ≤ 780 px) → 50 px (paysage court).
 - Le détail des conditions Yam's exige désormais 700 px de large **et** 560 px de

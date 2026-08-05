@@ -192,11 +192,9 @@ function App() {
             </Suspense>
           )}
           <RollTotal total={sumDice(dice)} isRolling={isThrowing} />
-        </div>
-        <div className="app-side">
           {showYamsPanel && <YamsPanel dice={dice} />}
-          <RollHistory entries={visibleHistory} />
         </div>
+        <RollHistory entries={visibleHistory} />
       </main>
       <footer className="app-footer">
         <RollButton onRoll={handleRoll} disabled={isThrowing} />

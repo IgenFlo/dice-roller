@@ -33,32 +33,32 @@ export function YamsPanel({ dice }: YamsPanelProps) {
   }, [valuesKey])
 
   return (
-    <section className="yams-panel" aria-label="Analyse Yam's">
-      <div className="yams-block">
-        <h2 className="yams-title">Dans ce tirage</h2>
-        <ul className="yams-obtained">
+    <>
+      <aside className="yams-rail yams-rail--left" aria-label="Combinaisons de ce tirage">
+        <p className="yams-rail-title">Ce tirage</p>
+        <ul className="yams-rail-list">
           {obtained.map(combination => (
             <li key={combination.id}>{formatObtained(combination)}</li>
           ))}
         </ul>
-      </div>
+      </aside>
 
       {chances.length > 0 && (
-        <div className="yams-block">
-          <h2 className="yams-title">Au prochain lancer</h2>
-          <ul className="yams-chances">
+        <aside className="yams-rail yams-rail--right" aria-label="Combinaisons les plus probables">
+          <p className="yams-rail-title">Prochain lancer</p>
+          <ul className="yams-rail-list">
             {chances.map(chance => (
-              <li key={chance.objective.id} className="yams-chance">
-                <span className="yams-chance-line">
-                  <span className="yams-chance-label">{chance.objective.label}</span>
-                  <span className="yams-chance-value">{formatPercentage(chance.probability)}</span>
+              <li key={chance.objective.id}>
+                <span>
+                  {chance.objective.label}{' '}
+                  <span className="yams-rail-value">{formatPercentage(chance.probability)}</span>
                 </span>
-                <span className="yams-chance-hint">{describeKeptValues(chance.keptValues)}</span>
+                <span className="yams-rail-hint">{describeKeptValues(chance.keptValues)}</span>
               </li>
             ))}
           </ul>
-        </div>
+        </aside>
       )}
-    </section>
+    </>
   )
 }

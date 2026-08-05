@@ -39,6 +39,11 @@ ou les panneaux d'information doit être relue à travers cette liste.
 - Seule exception admise : le **détail des conditions de blocage** de l'analyse
   Yam's, réservé aux écrans d'au moins 700 px de large **et** 560 px de haut.
   Sur téléphone, on n'affiche que le nom de la combinaison et son pourcentage.
+- L'analyse Yam's s'affiche en **bandeaux discrets aux bords de la zone de dés** :
+  combinaisons du tirage à gauche, probabilités du prochain lancer à droite.
+  Leur largeur est réservée en `padding-inline` sur `.app-dice-area`, donc ils ne
+  recouvrent jamais les dés ni le canvas 3D. Vérifier qu'il reste au moins deux
+  dés par rangée après déduction des bandeaux.
 
 ### 4. Scène 3D
 
