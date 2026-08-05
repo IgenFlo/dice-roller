@@ -1,4 +1,10 @@
-import type { AnimationMode, ThrowSettings } from '../animation/throwSettings'
+import {
+  DEFAULT_THROW_SETTINGS,
+  THROW_SETTING_RANGES,
+  THROW_SETTING_STEP,
+  type AnimationMode,
+  type ThrowSettings,
+} from '../animation/throwSettings'
 import './AnimationSettings.css'
 
 interface AnimationSettingsProps {
@@ -8,12 +14,6 @@ interface AnimationSettingsProps {
   onSettingsChange: (settings: ThrowSettings) => void
   modeChangeDisabled: boolean
 }
-
-const SLIDERS = [
-  { key: 'launchPower', label: 'Puissance du lancer', min: 0.5, max: 2, step: 0.05 },
-  { key: 'bounciness', label: 'Rebond', min: 0, max: 0.9, step: 0.05 },
-  { key: 'friction', label: 'Friction', min: 0.4, max: 2.5, step: 0.05 },
-] as const
 
 export function AnimationSettings({
   mode,
@@ -44,22 +44,29 @@ export function AnimationSettings({
           3D
         </button>
       </div>
-      {SLIDERS.map(slider => (
-        <label key={slider.key} className="animation-settings-slider">
-          <span className="animation-settings-label">{slider.label}</span>
+      {THROW_SETTING_RANGES.map(range => (
+        <label key={range.key} className="animation-settings-slider">
+          <span className="animation-settings-label">{range.label}</span>
           <input
             type="range"
-            min={slider.min}
-            max={slider.max}
-            step={slider.step}
-            value={settings[slider.key]}
+            min={range.min}
+            max={range.max}
+            step={THROW_SETTING_STEP}
+            value={settings[range.key]}
             onChange={event =>
-              onSettingsChange({ ...settings, [slider.key]: Number(event.target.value) })
+              onSettingsChange({ ...settings, [range.key]: Number(event.target.value) })
             }
           />
-          <span className="animation-settings-value">{settings[slider.key].toFixed(2)}</span>
+          <span className="animation-settings-value">{settings[range.key].toFixed(2)}</span>
         </label>
       ))}
+      <button
+        type="button"
+        className="animation-settings-reset"
+        onClick={() => onSettingsChange(DEFAULT_THROW_SETTINGS)}
+      >
+        Réglages par défaut
+      </button>
     </div>
   )
 }

@@ -24,12 +24,15 @@ const COCKED_RETHROW_DELAY_MS = 5000
 const FLAT_ALIGNMENT_MIN = 0.96
 const ON_FLOOR_MAX_Y = DIE_SIZE * 0.85
 const WALL_VISIBILITY_MARGIN = 0.15
+const MIN_DAMPING = 0.02
 const GRID_SPACING = 1.5
 const GRID_MAX_COLUMNS = 5
 const GRID_MIN_SPACING = DIE_SIZE * 1.05
 const AURA_DURATION_MS = 1200
 const LOCK_SPRITE_SIZE = 0.62
 const LOCK_HEIGHT_ABOVE_DIE = 0.85
+// Assez discret pour laisser lire les points du dé au travers.
+const LOCK_OPACITY = 0.45
 const FLAME_SPAWN_INTERVAL_S = 0.05
 const FLAME_TTL_S = 0.7
 // Le mélange additif sature vite : on plafonne l'opacité de chaque particule.
@@ -347,8 +350,10 @@ function isDieReadable(body: CANNON.Body): boolean {
 
 function launchDie(context: SceneContext, body: CANNON.Body, settings: ThrowSettings): void {
   body.type = CANNON.Body.DYNAMIC
-  body.linearDamping = 0.05 * settings.friction
-  body.angularDamping = 0.08 * settings.friction
+  // Un amortissement plancher garantit que les dés finissent par s'immobiliser,
+  // même avec la friction réglée à zéro.
+  body.linearDamping = MIN_DAMPING + 0.05 * settings.friction
+  body.angularDamping = MIN_DAMPING + 0.08 * settings.friction
   body.position.set(
     (Math.random() - 0.5) * context.halfWidth * 1.2,
     1.2 + Math.random() * 1.5,
@@ -655,6 +660,7 @@ export function DiceScene3D({
           map: context.lockTexture,
           color: appearanceRef.current.pipColor,
           transparent: true,
+          opacity: LOCK_OPACITY,
           depthWrite: false,
         }),
       )
@@ -746,6 +752,7 @@ export function DiceScene3D({
     if (!isNewRequest || context === null) return
 
     const throwSettings = settingsRef.current
+    context.world.gravity.set(0, WORLD_GRAVITY * throwSettings.gravity, 0)
     for (const contactMaterial of context.contactMaterials) {
       contactMaterial.restitution = throwSettings.bounciness
       contactMaterial.friction = 0.2 + 0.2 * throwSettings.friction

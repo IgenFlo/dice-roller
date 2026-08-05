@@ -62,9 +62,11 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
 
 ## Itération 4 (2026-08-05) — réglages d'animation et mode 3D
 
-- Popover « Animation » dans le header : toggle 2D/3D + trois curseurs partagés
-  (puissance du lancer, rebond, friction) via `ThrowSettings`
-  (`src/animation/throwSettings.ts`), appliqués aux deux moteurs.
+- Popover « Animation » dans le header : toggle 2D/3D + quatre curseurs partagés
+  (puissance du lancer 0–3, rebond 0–0,95, friction 0–4, gravité 0,1–3, pas de
+  0,01) via `ThrowSettings` (`src/animation/throwSettings.ts`), appliqués aux deux
+  moteurs, plus un bouton « Réglages par défaut ». La gravité garde un plancher
+  et l'amortissement 3D un minimum : sans eux les dés ne se poseraient jamais.
 - Mode 3D (`DiceScene3D`, three.js + cannon-es, chargé en lazy ~600 kB) : vrais
   cubes lancés sur un plateau invisible (murs = frustum), ombres portées sur le
   fond de l'app, textures des faces générées depuis les couleurs custom, clic
@@ -80,7 +82,8 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
 ## Itération 5 (2026-08-05) — lisibilité du lancer 3D
 
 - Un dé bloqué porte un cadenas flottant au-dessus de lui (sprite billboardé
-  teinté de la couleur des points), à la place de l'anneau au sol.
+  teinté de la couleur des points, semi-transparent pour laisser lire les
+  points), à la place de l'anneau au sol.
 - Le résultat n'est validé que si TOUS les dés lancés sont immobiles ET lisibles :
   face supérieure quasi horizontale (`alignment > 0.96`) et posée au sol
   (`y < 0.85 × taille du dé`, donc pas en équilibre sur un autre dé).

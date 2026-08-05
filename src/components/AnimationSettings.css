@@ -51,6 +51,21 @@
   grid-column: 1 / -1;
 }
 
+.animation-settings-reset {
+  align-self: center;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  transition: background-color 0.15s;
+}
+
+.animation-settings-reset:hover {
+  background: var(--color-bg);
+}
+
 .animation-settings-value {
   grid-column: 2;
   min-width: 36px;

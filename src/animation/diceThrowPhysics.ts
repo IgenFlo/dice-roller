@@ -70,13 +70,17 @@ export function stepThrownDie(
 ): ThrownDie {
   if (die.stopped) return die;
 
+  const gravity = GRAVITY * settings.gravity;
   let height = die.height + die.verticalVelocity * deltaSeconds;
-  let verticalVelocity = die.verticalVelocity - GRAVITY * deltaSeconds;
+  let verticalVelocity = die.verticalVelocity - gravity * deltaSeconds;
   if (height <= 0) {
     height = 0;
+    // Vitesse réelle au contact, déduite de l'énergie : la vitesse de fin de frame
+    // inclut la gravité appliquée sous le sol et entretiendrait un rebond infini.
+    const impactSpeed = Math.sqrt(die.verticalVelocity ** 2 + 2 * gravity * Math.max(die.height, 0));
     verticalVelocity =
-      Math.abs(verticalVelocity) > MIN_BOUNCE_VERTICAL_SPEED
-        ? -verticalVelocity * settings.bounciness * HEIGHT_RESTITUTION_FACTOR
+      impactSpeed > MIN_BOUNCE_VERTICAL_SPEED
+        ? impactSpeed * settings.bounciness * HEIGHT_RESTITUTION_FACTOR
         : 0;
   }
 
