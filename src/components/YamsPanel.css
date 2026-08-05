@@ -1,0 +1,85 @@
+.yams-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  justify-content: center;
+}
+
+.yams-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yams-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.yams-obtained {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.yams-obtained li {
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.yams-chances {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.yams-chance {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-accent);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.yams-chance-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.yams-chance-value {
+  font-weight: 700;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Le détail des conditions n'apparaît qu'à partir du desktop, faute de place. */
+.yams-chance-hint {
+  display: none;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 700px) {
+  .yams-chance-hint {
+    display: block;
+  }
+}

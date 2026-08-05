@@ -134,6 +134,28 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
   `forceCombination`, qui garantit exactement la taille demandée (les autres dés
   sont répartis sur les faces restantes). En 2D le lancer est animé normalement.
 
+## Itération 7 (2026-08-05) — analyse Yam's (5 dés)
+
+Grille retenue (validée) : partie haute « Les 1 » à « Les 6 » (somme des dés de
+la face, bonus 35 à 63 points) ; partie basse Brelan et Carré (somme des dés
+identiques), Full 25, Petite suite 30, Grande suite 40, Yam's 50 (points fixes,
+et non la somme comme l'écrit la page Nathan), Chance (somme des 5 dés). Un
+Yam's ne compte pas comme un Full.
+
+Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
+
+- **Dans ce tirage** : combinaisons réellement obtenues avec leurs points, plus
+  les cases hautes non nulles (« 16 aux 4 »).
+- **Au prochain lancer** : les 3 objectifs non encore obtenus les plus probables.
+  Objectifs = les 6 combinaisons de la partie basse + « Trois N » par face
+  (le seuil de trois dés qui donne le bonus).
+- Probabilités **exactes** (`bestNextRollChances`) : énumération des 32 blocages
+  possibles × toutes les faces relançables, en retenant le meilleur blocage.
+  Vérifié sur l'exemple de référence `4 4 4 4 5` → Yam's 16,67 % en bloquant les
+  4, Full 16,67 % en bloquant `4 4 4 5`.
+- Le détail du blocage n'est affiché qu'à partir de 700 px de large ; sur
+  téléphone seuls le nom et le pourcentage restent visibles.
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).

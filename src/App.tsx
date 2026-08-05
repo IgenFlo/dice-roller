@@ -11,6 +11,7 @@ import { Header } from './components/Header'
 import { RollButton } from './components/RollButton'
 import { RollHistory } from './components/RollHistory'
 import { RollTotal } from './components/RollTotal'
+import { YamsPanel } from './components/YamsPanel'
 import {
   findCombo,
   forceCombination,
@@ -18,6 +19,7 @@ import {
   type Combo,
 } from './domain/combos'
 import { setDiceValues, sumDice, type Die } from './domain/dice'
+import { YAMS_DICE_COUNT } from './domain/yams'
 import { DEFAULT_DIE_APPEARANCE, type DieAppearance } from './domain/dieAppearance'
 import { useDiceGame } from './hooks/useDiceGame'
 import { useDiceThrow } from './hooks/useDiceThrow'
@@ -140,6 +142,8 @@ function App() {
   // En 2D le tirage est connu dès le clic : la dernière entrée reste cachée
   // pendant l'animation. En 3D l'entrée n'est créée qu'à la fin du lancer.
   const visibleHistory = animationMode === '2d' && isThrowing ? history.slice(1) : history
+  // L'analyse Yam's n'a de sens qu'une fois les 5 dés lancés et révélés.
+  const showYamsPanel = dice.length === YAMS_DICE_COUNT && rollCount > 0 && !isThrowing
 
   return (
     <div className="app">
@@ -189,6 +193,7 @@ function App() {
           )}
           <RollTotal total={sumDice(dice)} isRolling={isThrowing} />
         </div>
+        {showYamsPanel && <YamsPanel dice={dice} />}
         <RollHistory entries={visibleHistory} />
       </main>
       <footer className="app-footer">
