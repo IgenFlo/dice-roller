@@ -2,48 +2,18 @@ import {
   DEFAULT_THROW_SETTINGS,
   THROW_SETTING_RANGES,
   THROW_SETTING_STEP,
-  type AnimationMode,
   type ThrowSettings,
 } from '../animation/throwSettings'
 import './AnimationSettings.css'
 
 interface AnimationSettingsProps {
-  mode: AnimationMode
-  onModeChange: (mode: AnimationMode) => void
   settings: ThrowSettings
   onSettingsChange: (settings: ThrowSettings) => void
-  modeChangeDisabled: boolean
 }
 
-export function AnimationSettings({
-  mode,
-  onModeChange,
-  settings,
-  onSettingsChange,
-  modeChangeDisabled,
-}: AnimationSettingsProps) {
+export function AnimationSettings({ settings, onSettingsChange }: AnimationSettingsProps) {
   return (
     <div className="animation-settings">
-      <div className="animation-settings-mode" role="group" aria-label="Type d'animation">
-        <button
-          type="button"
-          className={mode === '2d' ? 'animation-settings-mode-active' : ''}
-          aria-pressed={mode === '2d'}
-          disabled={modeChangeDisabled}
-          onClick={() => onModeChange('2d')}
-        >
-          2D
-        </button>
-        <button
-          type="button"
-          className={mode === '3d' ? 'animation-settings-mode-active' : ''}
-          aria-pressed={mode === '3d'}
-          disabled={modeChangeDisabled}
-          onClick={() => onModeChange('3d')}
-        >
-          3D
-        </button>
-      </div>
       {THROW_SETTING_RANGES.map(range => (
         <label key={range.key} className="animation-settings-slider">
           <span className="animation-settings-label">{range.label}</span>

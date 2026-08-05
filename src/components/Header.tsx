@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { AnimationMode, ThrowSettings } from '../animation/throwSettings'
+import type { ThrowSettings } from '../animation/throwSettings'
 import { TESTABLE_COMBO_SIZES } from '../domain/combos'
 import { MAX_DICE_COUNT, MIN_DICE_COUNT } from '../domain/dice'
 import type { DieAppearance } from '../domain/dieAppearance'
@@ -15,8 +15,6 @@ interface HeaderProps {
   onReset: () => void
   onRecenter: () => void
   controlsDisabled: boolean
-  animationMode: AnimationMode
-  onAnimationModeChange: (mode: AnimationMode) => void
   throwSettings: ThrowSettings
   onThrowSettingsChange: (settings: ThrowSettings) => void
   onForceCombination: (comboSize: number) => void
@@ -30,8 +28,6 @@ export function Header({
   onReset,
   onRecenter,
   controlsDisabled,
-  animationMode,
-  onAnimationModeChange,
   throwSettings,
   onThrowSettingsChange,
   onForceCombination,
@@ -84,11 +80,8 @@ export function Header({
               <summary>Animation</summary>
               <div className="header-settings-panel">
                 <AnimationSettings
-                  mode={animationMode}
-                  onModeChange={onAnimationModeChange}
                   settings={throwSettings}
                   onSettingsChange={onThrowSettingsChange}
-                  modeChangeDisabled={controlsDisabled}
                 />
               </div>
             </details>

@@ -4,6 +4,7 @@ import {
   type AnimationMode,
   type ThrowSettings,
 } from './animation/throwSettings'
+import { AnimationModeToggle } from './components/AnimationModeToggle'
 import { DiceGrid } from './components/DiceGrid'
 import { Fireworks } from './components/Fireworks'
 import { Header } from './components/Header'
@@ -150,14 +151,17 @@ function App() {
         onReset={handleReset}
         onRecenter={handleRecenter}
         controlsDisabled={isThrowing}
-        animationMode={animationMode}
-        onAnimationModeChange={setAnimationMode}
         throwSettings={throwSettings}
         onThrowSettingsChange={setThrowSettings}
         onForceCombination={handleForceCombination}
       />
       <main className="app-main">
         <div className="app-dice-area" ref={arenaRef}>
+          <AnimationModeToggle
+            mode={animationMode}
+            onModeChange={setAnimationMode}
+            disabled={isThrowing}
+          />
           {animationMode === '2d' ? (
             <DiceGrid
               dice={dice}

@@ -65,7 +65,9 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
 
 ## Itération 4 (2026-08-05) — réglages d'animation et mode 3D
 
-- Popover « Animation » dans le header : toggle 2D/3D + quatre curseurs partagés
+- Bascule 2D/3D en survol, en haut à droite de la zone de dés (`AnimationModeToggle`),
+  hors des réglages pour rester accessible en permanence.
+- Popover « Animation » dans le header : quatre curseurs partagés
   (puissance du lancer 0–3, rebond 0–0,95, friction 0–4, gravité 0,1–3, pas de
   0,01) via `ThrowSettings` (`src/animation/throwSettings.ts`), appliqués aux deux
   moteurs, plus un bouton « Réglages par défaut ». La gravité garde un plancher
