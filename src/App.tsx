@@ -55,11 +55,12 @@ function App() {
     })
   }
 
+  // Le lancer résolu fait autorité : sans combinaison sur la table, tout s'éteint,
+  // y compris les flammes conservées sur les dés bloqués pendant le jet.
   const revealCombo = (resolvedDice: readonly Die[]) => {
     const combo = findCombo(resolvedDice)
-    if (combo === null) return
-    setComboEffect(current => ({ combo, key: (current?.key ?? 0) + 1 }))
-    if (combo.tier === 'quint') setFireworksKey(current => current + 1)
+    setComboEffect(current => (combo === null ? null : { combo, key: (current?.key ?? 0) + 1 }))
+    if (combo?.tier === 'quint') setFireworksKey(current => current + 1)
   }
 
   const handleDiceCountChange = (count: number) => {
