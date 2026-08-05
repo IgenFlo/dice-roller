@@ -164,9 +164,9 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
 - En paysage court (`orientation: landscape` et `max-height: 560px`), header,
   footer, dés, bouton de lancer et pastilles sont compactés.
 - L'analyse Yam's est passée en deux bandeaux discrets aux bords de la zone de
-  dés (tirage courant à gauche, probabilités à droite). Leur largeur est réservée
-  en `padding-inline`, donc ils ne recouvrent ni les dés ni le canvas 3D :
-  104 px sur desktop, 68 px sous 700 px de large, 92 px en paysage court.
+  dés (tirage courant à gauche, probabilités à droite), en **surimpression** :
+  `pointer-events: none` et halo de texte, les dés roulent dessous. Ils ne
+  réservent aucune place dans le flux, la zone de dés garde toute sa largeur.
 - Taille des dés : 96 px → 68 px (largeur ≤ 700 px) → 60 px (hauteur ≤ 780 px)
   → 76 px en paysage court, où l'espace récupéré est rendu aux dés.
 - Optimisation du paysage (2026-08-05, après test sur iPhone) : le total passe en
@@ -186,8 +186,11 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
   14 unités (≥ 520 px), et `fitFieldOfView` résout la focale correspondante par
   dichotomie. La demi-largeur jouable est mesurée au bord bas (le plus étroit)
   par lancer de rayon, au lieu d'une formule sur le rapport d'aspect.
-- Effet mesuré : en paysage sur téléphone (canvas 800 × 143), un dé passe de
-  7 px à 34 px de haut à l'écran. Desktop inchangé (29 px), portrait 24 → 27 px.
+- Effet mesuré, après réglage : en paysage sur téléphone un dé passe de 7 px à
+  24 px de haut, avec 3,2 unités d'écart entre cinq dés alignés (profondeur
+  visible 4 unités, plateau large de 17,7). Desktop inchangé (29 px), portrait
+  24 → 26 px. Un plateau trop peu profond (2,8) rendait les dés énormes mais les
+  faisait se chevaucher : la profondeur visible arbitre les deux.
 - La colonne des dés bloqués se dédouble quand le plateau est trop plat pour les
   empiler (`heldColumnLayout`), au lieu de les faire se chevaucher.
 

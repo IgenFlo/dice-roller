@@ -13,7 +13,7 @@ import { AURA_FACE_VALUE } from '../domain/dieFaces'
 import './DiceScene3D.css'
 
 const AREA_DEPTH = 8
-const MAX_HALF_WIDTH = 8
+const MAX_HALF_WIDTH = 12
 const DIE_SIZE = 1
 const WORLD_GRAVITY = -30
 const CAMERA_FOV = 45
@@ -35,7 +35,7 @@ const HELD_MIN_SPACING = DIE_SIZE * 1.05
 // sur téléphone) et le plateau profond du desktop.
 const SHORT_CANVAS_HEIGHT = 150
 const TALL_CANVAS_HEIGHT = 520
-const SHALLOW_VISIBLE_DEPTH = 2.8
+const SHALLOW_VISIBLE_DEPTH = 4
 const DEEP_VISIBLE_DEPTH = 14
 const GRID_SPACING = 1.5
 const GRID_MAX_COLUMNS = 5

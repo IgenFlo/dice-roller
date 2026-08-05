@@ -14,8 +14,8 @@
   padding: 24px 16px 12px;
 }
 
-/* Les bandeaux Yam's occupent les bords : la largeur qu'ils réservent est prise
-   en padding pour que dés et canvas 3D ne passent jamais dessous. */
+/* Les bandeaux Yam's sont un HUD : ils flottent au-dessus des bords sans prendre
+   de place, les dés roulent dessous. */
 .app-dice-area {
   --yams-rail-width: 104px;
 
@@ -27,7 +27,6 @@
   align-items: center;
   justify-content: center;
   gap: 28px;
-  padding-inline: var(--yams-rail-width);
 }
 
 .app-scene-fallback {

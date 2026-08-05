@@ -46,9 +46,10 @@ ou les panneaux d'information doit être relue à travers cette liste.
   Sur téléphone, on n'affiche que le nom de la combinaison et son pourcentage.
 - L'analyse Yam's s'affiche en **bandeaux discrets aux bords de la zone de dés** :
   combinaisons du tirage à gauche, probabilités du prochain lancer à droite.
-  Leur largeur est réservée en `padding-inline` sur `.app-dice-area`, donc ils ne
-  recouvrent jamais les dés ni le canvas 3D. Vérifier qu'il reste au moins deux
-  dés par rangée après déduction des bandeaux.
+  Ce sont des éléments de **HUD en surimpression** — comme une barre de vie dans
+  un jeu : `position: absolute`, `pointer-events: none`, halo de texte pour rester
+  lisibles, et **les dés roulent dessous**. Ils ne doivent jamais réserver de
+  place dans le flux : la zone de dés garde toute sa largeur.
 
 ### 4. Scène 3D
 

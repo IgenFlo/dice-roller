@@ -1,6 +1,10 @@
-/* Bandeaux discrets aux bords de la zone de dés. La zone réserve leur largeur en
-   padding, donc ils ne recouvrent jamais les dés ni le canvas 3D. */
+/* Bandeaux discrets aux bords de la zone de dés, en surimpression : les dés
+   roulent dessous. Le halo de fond garde le texte lisible par-dessus un dé. */
 .yams-rail {
+  text-shadow:
+    0 0 4px var(--color-bg),
+    0 0 8px var(--color-bg),
+    0 0 12px var(--color-bg);
   position: absolute;
   top: 0;
   bottom: 0;
