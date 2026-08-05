@@ -21,6 +21,12 @@
   gap: 28px;
 }
 
+.app-scene-fallback {
+  flex: 1;
+  align-self: stretch;
+  min-height: 240px;
+}
+
 .app-footer {
   display: flex;
   justify-content: center;

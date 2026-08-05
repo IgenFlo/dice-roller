@@ -7,6 +7,7 @@ import {
   type ThrowArena,
   type ThrownDie,
 } from '../animation/diceThrowPhysics'
+import type { ThrowSettings } from '../animation/throwSettings'
 import { randomFaceValue, type Die } from '../domain/dice'
 
 const MAX_THROW_DURATION_S = 2.5
@@ -46,22 +47,27 @@ export function useDiceThrow(
   dice: readonly Die[],
   rollCount: number,
   arenaRef: RefObject<HTMLDivElement | null>,
+  settings: ThrowSettings,
+  enabled: boolean,
 ): DiceThrowAnimation {
   const [isThrowing, setIsThrowing] = useState(false)
   const [scrambledValues, setScrambledValues] = useState<Record<number, number>>({})
   const lastSeenRollCountRef = useRef(rollCount)
   const diceRef = useRef(dice)
+  const settingsRef = useRef(settings)
 
   useEffect(() => {
     diceRef.current = dice
+    settingsRef.current = settings
   })
 
   useEffect(() => {
     const isNewRoll = rollCount !== lastSeenRollCountRef.current
     lastSeenRollCountRef.current = rollCount
     const arena = arenaRef.current
-    if (!isNewRoll || arena === null) return
+    if (!isNewRoll || !enabled || arena === null) return
 
+    const throwSettings = settingsRef.current
     const arenaRect = arena.getBoundingClientRect()
     const slots = new Map<number, DieSlot>()
     for (const element of arena.querySelectorAll<HTMLElement>('[data-die-id]')) {
@@ -85,7 +91,9 @@ export function useDiceThrow(
       dieSize: firstSlot.element.getBoundingClientRect().width,
     }
 
-    let states: ThrownDie[] = thrownIds.map(id => createThrownDie(id, throwArena, Math.random))
+    let states: ThrownDie[] = thrownIds.map(id =>
+      createThrownDie(id, throwArena, throwSettings, Math.random),
+    )
     const settleTweens = new Map<number, SettleTween>()
     const tumbleAccumulators = new Map<number, number>()
     const doneIds = new Set<number>()
@@ -151,8 +159,9 @@ export function useDiceThrow(
       elapsedSeconds += deltaSeconds
 
       states = resolveDiceCollisions(
-        states.map(state => stepThrownDie(state, throwArena, deltaSeconds)),
+        states.map(state => stepThrownDie(state, throwArena, throwSettings, deltaSeconds)),
         throwArena,
+        throwSettings,
       )
       if (elapsedSeconds > MAX_THROW_DURATION_S) {
         states = states.map(state => ({ ...state, stopped: true, height: 0 }))
@@ -183,7 +192,7 @@ export function useDiceThrow(
       cancelAnimationFrame(frameId)
       for (const slot of slots.values()) slot.element.style.transform = ''
     }
-  }, [rollCount, arenaRef])
+  }, [rollCount, arenaRef, enabled])
 
   return { isThrowing, scrambledValues }
 }

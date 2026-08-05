@@ -30,6 +30,16 @@ export function sumDice(dice: readonly Die[]): number {
   return dice.reduce((sum, die) => sum + die.value, 0);
 }
 
+export function setDiceValues(
+  dice: readonly Die[],
+  values: Readonly<Record<number, number>>,
+): Die[] {
+  return dice.map(die => {
+    const value = values[die.id];
+    return value === undefined ? die : { ...die, value };
+  });
+}
+
 export function toggleHold(dice: readonly Die[], dieId: number): Die[] {
   return dice.map(die => (die.id === dieId ? { ...die, isHeld: !die.isHeld } : die));
 }

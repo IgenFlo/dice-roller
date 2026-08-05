@@ -1,0 +1,60 @@
+.animation-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.animation-settings-mode {
+  display: flex;
+  gap: 0;
+  align-self: center;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.animation-settings-mode button {
+  padding: 8px 24px;
+  border: none;
+  background: var(--color-surface);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.animation-settings-mode button.animation-settings-mode-active {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.animation-settings-mode button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.animation-settings-slider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.animation-settings-slider input {
+  grid-column: 1;
+  width: 100%;
+  accent-color: var(--color-accent);
+}
+
+.animation-settings-label {
+  grid-column: 1 / -1;
+}
+
+.animation-settings-value {
+  grid-column: 2;
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}

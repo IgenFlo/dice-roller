@@ -4,6 +4,7 @@ import {
   createDice,
   resizeDice,
   rollDice,
+  setDiceValues,
   toggleHold,
   type Die,
 } from '../domain/dice'
@@ -18,6 +19,7 @@ interface DiceGame {
   rollCount: number
   history: RollHistoryEntry[]
   roll: () => void
+  applyRollResult: (values: Readonly<Record<number, number>>) => void
   toggleDieHold: (dieId: number) => void
   setDiceCount: (count: number) => void
   reset: () => void
@@ -38,6 +40,16 @@ export function useDiceGame(): DiceGame {
     )
   }
 
+  const applyRollResult = (values: Readonly<Record<number, number>>) => {
+    const updatedDice = setDiceValues(dice, values)
+    const rollNumber = rollCount + 1
+    setDice(updatedDice)
+    setRollCount(rollNumber)
+    setHistory(currentHistory =>
+      appendRollHistoryEntry(currentHistory, createRollHistoryEntry(rollNumber, updatedDice)),
+    )
+  }
+
   const reset = () => {
     setDice(currentDice => createDice(currentDice.length))
     setHistory([])
@@ -48,6 +60,7 @@ export function useDiceGame(): DiceGame {
     rollCount,
     history,
     roll,
+    applyRollResult,
     toggleDieHold: (dieId: number) => setDice(currentDice => toggleHold(currentDice, dieId)),
     setDiceCount: (count: number) => setDice(currentDice => resizeDice(currentDice, count)),
     reset,

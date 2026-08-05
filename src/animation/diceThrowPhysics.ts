@@ -1,4 +1,5 @@
 import type { RandomSource } from '../domain/dice';
+import type { ThrowSettings } from './throwSettings';
 
 export interface ThrowArena {
   readonly width: number;
@@ -25,21 +26,27 @@ const LAUNCH_SPEED_FACTOR = 1.6;
 const LAUNCH_SPREAD_RADIANS = 1.2;
 const INITIAL_HEIGHT = 20;
 const GRAVITY = 2600;
-const HEIGHT_RESTITUTION = 0.45;
+const HEIGHT_RESTITUTION_FACTOR = 0.8;
 const MIN_BOUNCE_VERTICAL_SPEED = 120;
-const WALL_RESTITUTION = 0.55;
 const WALL_SPIN_LOSS = 0.8;
 const GROUND_FRICTION = 3.2;
 const AIR_FRICTION = 0.5;
 const SPIN_FRICTION = 2.6;
 const STOP_LINEAR_SPEED = 28;
 const STOP_ANGULAR_SPEED = 45;
-const COLLISION_RESTITUTION = 0.5;
 const LIFT_SCALE_PER_HEIGHT = 0.0035;
 
-export function createThrownDie(id: number, arena: ThrowArena, random: RandomSource): ThrownDie {
+export function createThrownDie(
+  id: number,
+  arena: ThrowArena,
+  settings: ThrowSettings,
+  random: RandomSource,
+): ThrownDie {
   const launchSpeed =
-    (0.9 + random() * 0.5) * Math.min(arena.width, arena.height) * LAUNCH_SPEED_FACTOR;
+    (0.9 + random() * 0.5) *
+    Math.min(arena.width, arena.height) *
+    LAUNCH_SPEED_FACTOR *
+    settings.launchPower;
   const direction = -Math.PI / 2 + (random() - 0.5) * LAUNCH_SPREAD_RADIANS;
   return {
     id,
@@ -48,14 +55,19 @@ export function createThrownDie(id: number, arena: ThrowArena, random: RandomSou
     velocityX: Math.cos(direction) * launchSpeed,
     velocityY: Math.sin(direction) * launchSpeed,
     angle: 0,
-    angularVelocity: (random() - 0.5) * 1600,
+    angularVelocity: (random() - 0.5) * 1600 * settings.launchPower,
     height: INITIAL_HEIGHT,
-    verticalVelocity: 150 + random() * 250,
+    verticalVelocity: (150 + random() * 250) * settings.launchPower,
     stopped: false,
   };
 }
 
-export function stepThrownDie(die: ThrownDie, arena: ThrowArena, deltaSeconds: number): ThrownDie {
+export function stepThrownDie(
+  die: ThrownDie,
+  arena: ThrowArena,
+  settings: ThrowSettings,
+  deltaSeconds: number,
+): ThrownDie {
   if (die.stopped) return die;
 
   let height = die.height + die.verticalVelocity * deltaSeconds;
@@ -64,35 +76,36 @@ export function stepThrownDie(die: ThrownDie, arena: ThrowArena, deltaSeconds: n
     height = 0;
     verticalVelocity =
       Math.abs(verticalVelocity) > MIN_BOUNCE_VERTICAL_SPEED
-        ? -verticalVelocity * HEIGHT_RESTITUTION
+        ? -verticalVelocity * settings.bounciness * HEIGHT_RESTITUTION_FACTOR
         : 0;
   }
 
-  const frictionRate = height > 0 ? AIR_FRICTION : GROUND_FRICTION;
+  const frictionRate = (height > 0 ? AIR_FRICTION : GROUND_FRICTION) * settings.friction;
   const damping = Math.exp(-frictionRate * deltaSeconds);
   let velocityX = die.velocityX * damping;
   let velocityY = die.velocityY * damping;
-  let angularVelocity = die.angularVelocity * Math.exp(-SPIN_FRICTION * deltaSeconds);
+  let angularVelocity =
+    die.angularVelocity * Math.exp(-SPIN_FRICTION * settings.friction * deltaSeconds);
 
   let x = die.x + velocityX * deltaSeconds;
   let y = die.y + velocityY * deltaSeconds;
   const halfSize = arena.dieSize / 2;
   if (x < halfSize) {
     x = halfSize;
-    velocityX = Math.abs(velocityX) * WALL_RESTITUTION;
+    velocityX = Math.abs(velocityX) * settings.bounciness;
     angularVelocity *= WALL_SPIN_LOSS;
   } else if (x > arena.width - halfSize) {
     x = arena.width - halfSize;
-    velocityX = -Math.abs(velocityX) * WALL_RESTITUTION;
+    velocityX = -Math.abs(velocityX) * settings.bounciness;
     angularVelocity *= WALL_SPIN_LOSS;
   }
   if (y < halfSize) {
     y = halfSize;
-    velocityY = Math.abs(velocityY) * WALL_RESTITUTION;
+    velocityY = Math.abs(velocityY) * settings.bounciness;
     angularVelocity *= WALL_SPIN_LOSS;
   } else if (y > arena.height - halfSize) {
     y = arena.height - halfSize;
-    velocityY = -Math.abs(velocityY) * WALL_RESTITUTION;
+    velocityY = -Math.abs(velocityY) * settings.bounciness;
     angularVelocity *= WALL_SPIN_LOSS;
   }
 
@@ -117,7 +130,11 @@ export function stepThrownDie(die: ThrownDie, arena: ThrowArena, deltaSeconds: n
   };
 }
 
-export function resolveDiceCollisions(dice: readonly ThrownDie[], arena: ThrowArena): ThrownDie[] {
+export function resolveDiceCollisions(
+  dice: readonly ThrownDie[],
+  arena: ThrowArena,
+  settings: ThrowSettings,
+): ThrownDie[] {
   const result = dice.map(die => ({ ...die }));
   const minDistance = arena.dieSize * 0.95;
 
@@ -142,7 +159,7 @@ export function resolveDiceCollisions(dice: readonly ThrownDie[], arena: ThrowAr
         (a.velocityX - b.velocityX) * normalX + (a.velocityY - b.velocityY) * normalY;
       if (approachSpeed <= 0) continue;
 
-      const impulse = (approachSpeed * (1 + COLLISION_RESTITUTION)) / 2;
+      const impulse = (approachSpeed * (1 + settings.bounciness)) / 2;
       a.velocityX -= impulse * normalX;
       a.velocityY -= impulse * normalY;
       b.velocityX += impulse * normalX;

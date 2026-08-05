@@ -1,5 +1,7 @@
+import type { AnimationMode, ThrowSettings } from '../animation/throwSettings'
 import { MAX_DICE_COUNT, MIN_DICE_COUNT } from '../domain/dice'
 import type { DieAppearance } from '../domain/dieAppearance'
+import { AnimationSettings } from './AnimationSettings'
 import { DieAppearancePicker } from './DieAppearancePicker'
 import './Header.css'
 
@@ -10,6 +12,10 @@ interface HeaderProps {
   onAppearanceChange: (appearance: DieAppearance) => void
   onReset: () => void
   controlsDisabled: boolean
+  animationMode: AnimationMode
+  onAnimationModeChange: (mode: AnimationMode) => void
+  throwSettings: ThrowSettings
+  onThrowSettingsChange: (settings: ThrowSettings) => void
 }
 
 export function Header({
@@ -19,6 +25,10 @@ export function Header({
   onAppearanceChange,
   onReset,
   controlsDisabled,
+  animationMode,
+  onAnimationModeChange,
+  throwSettings,
+  onThrowSettingsChange,
 }: HeaderProps) {
   return (
     <header className="header">
@@ -48,12 +58,19 @@ export function Header({
         <DieAppearancePicker appearance={appearance} onAppearanceChange={onAppearanceChange} />
       </div>
       <div className="header-group">
-        <button
-          type="button"
-          className="header-reset"
-          disabled={controlsDisabled}
-          onClick={onReset}
-        >
+        <details className="header-settings">
+          <summary>Animation</summary>
+          <div className="header-settings-panel">
+            <AnimationSettings
+              mode={animationMode}
+              onModeChange={onAnimationModeChange}
+              settings={throwSettings}
+              onSettingsChange={onThrowSettingsChange}
+              modeChangeDisabled={controlsDisabled}
+            />
+          </div>
+        </details>
+        <button type="button" className="header-reset" disabled={controlsDisabled} onClick={onReset}>
           Réinitialiser
         </button>
       </div>

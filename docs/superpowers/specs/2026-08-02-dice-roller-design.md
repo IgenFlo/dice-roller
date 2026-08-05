@@ -60,6 +60,23 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
   custom, permutation des faces pour respecter le tirage du domaine) reste cadrée
   comme itération possible.
 
+## Itération 4 (2026-08-05) — réglages d'animation et mode 3D
+
+- Popover « Animation » dans le header : toggle 2D/3D + trois curseurs partagés
+  (puissance du lancer, rebond, friction) via `ThrowSettings`
+  (`src/animation/throwSettings.ts`), appliqués aux deux moteurs.
+- Mode 3D (`DiceScene3D`, three.js + cannon-es, chargé en lazy ~600 kB) : vrais
+  cubes lancés sur un plateau invisible (murs = frustum), ombres portées sur le
+  fond de l'app, textures des faces générées depuis les couleurs custom, clic
+  raycasté pour bloquer un dé (anneau couleur des points), les dés restent où ils
+  s'arrêtent.
+- Source du résultat selon le mode : en 2D le domaine tire les valeurs
+  (`rollDice`) et l'animation est décorative ; en 3D la physique EST le générateur
+  aléatoire — la face supérieure détectée à l'arrêt est commise au domaine via
+  `applyRollResult`/`setDiceValues` (total + historique à la résolution).
+- Faces opposées des cubes 3D somment à 7 ; disposition partagée des points dans
+  `src/domain/dieFaces.ts` (SVG 2D et textures 3D).
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).
