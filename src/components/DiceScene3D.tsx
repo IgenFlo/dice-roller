@@ -138,6 +138,17 @@ function arrangeDiceInGrid(context: SceneContext, dice: readonly Die[]): void {
   })
 }
 
+// Position du mur du fond : là où le bord haut du canvas coupe le plateau à
+// hauteur de dé, pour que les dés puissent occuper toute la zone jusqu'au header.
+function topEdgeFloorZ(camera: THREE.PerspectiveCamera): number {
+  const raycaster = new THREE.Raycaster()
+  raycaster.setFromCamera(new THREE.Vector2(0, 1), camera)
+  const diePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -DIE_SIZE / 2)
+  const intersection = new THREE.Vector3()
+  const hit = raycaster.ray.intersectPlane(diePlane, intersection)
+  return hit === null ? -AREA_DEPTH / 2 : intersection.z
+}
+
 function isBodyCalm(body: CANNON.Body): boolean {
   return (
     body.velocity.length() < SETTLE_LINEAR_SPEED &&
@@ -272,9 +283,11 @@ export function DiceScene3D({
       renderer.setSize(width, height, false)
       camera.aspect = width / height
       camera.updateProjectionMatrix()
+      camera.updateMatrixWorld()
       context.halfWidth = Math.min(MAX_HALF_WIDTH, (AREA_DEPTH / 2) * camera.aspect * 0.85)
       walls.left.position.set(-context.halfWidth, 0, 0)
       walls.right.position.set(context.halfWidth, 0, 0)
+      walls.back.position.set(0, 0, topEdgeFloorZ(camera))
     }
     applySize(container.clientWidth, container.clientHeight)
     const resizeObserver = new ResizeObserver(entries => {
