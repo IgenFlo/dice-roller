@@ -1,3 +1,4 @@
+import type { Combo } from '../domain/combos'
 import type { Die as DieModel } from '../domain/dice'
 import type { DieAppearance } from '../domain/dieAppearance'
 import { Die } from './Die'
@@ -8,6 +9,7 @@ interface DiceGridProps {
   scrambledValues: Readonly<Record<number, number>>
   isThrowing: boolean
   appearance: DieAppearance
+  combo: Combo | null
   onToggleHold: (dieId: number) => void
 }
 
@@ -16,6 +18,7 @@ export function DiceGrid({
   scrambledValues,
   isThrowing,
   appearance,
+  combo,
   onToggleHold,
 }: DiceGridProps) {
   return (
@@ -26,6 +29,7 @@ export function DiceGrid({
             die={die}
             displayValue={scrambledValues[die.id] ?? die.value}
             disabled={isThrowing}
+            comboTier={combo !== null && combo.dieIds.includes(die.id) ? combo.tier : null}
             appearance={appearance}
             onToggleHold={onToggleHold}
           />

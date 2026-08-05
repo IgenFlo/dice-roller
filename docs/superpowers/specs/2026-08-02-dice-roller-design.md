@@ -91,6 +91,25 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
   les murs sur écran étroit. Les dés rangés sont endormis (`body.sleep()`) pour
   qu'aucun contact résiduel ne les fasse rouler.
 
+## Itération 6 (2026-08-05) — effets de combinaison
+
+- `src/domain/combos.ts` : `findCombo` retourne le plus grand groupe de dés
+  identiques (≥ 3) → paliers `triple` (3), `quad` (4), `quint` (5+).
+- Effets déclenchés à la révélation des valeurs uniquement (fin d'animation 2D,
+  résolution 3D), jamais sur l'état initial ni pendant un lancer, pendant
+  `COMBO_EFFECT_DURATION_MS` (3 s) :
+  - triple → flammes jaunes/oranges autour des dés concernés
+  - quad → flammes rouges/oranges, plus larges et plus nerveuses
+  - quint → flammes bleues + bouquet final feu d'artifice plein écran
+- Rendu par mode : en 2D dégradés radiaux CSS animés (`DieFlames`), en 3D
+  particules sprites qui montent et s'estompent (`emitFlames`/`advanceFlames`).
+  Couleurs et durée partagées via `src/animation/comboEffects.ts`.
+- Feu d'artifice : `Fireworks`, canvas plein écran (fusées + gerbes d'étincelles
+  avec gravité et traînées) sur un voile sombre momentané, `pointer-events: none`.
+- Panneau « Tests » du header : force 3, 4 ou 5 dés identiques via
+  `forceCombination`, qui garantit exactement la taille demandée (les autres dés
+  sont répartis sur les faces restantes). En 2D le lancer est animé normalement.
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).

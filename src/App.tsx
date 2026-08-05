@@ -1,15 +1,18 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { COMBO_EFFECT_DURATION_MS } from './animation/comboEffects'
 import {
   DEFAULT_THROW_SETTINGS,
   type AnimationMode,
   type ThrowSettings,
 } from './animation/throwSettings'
 import { DiceGrid } from './components/DiceGrid'
+import { Fireworks } from './components/Fireworks'
 import { Header } from './components/Header'
 import { RollButton } from './components/RollButton'
 import { RollHistory } from './components/RollHistory'
 import { RollTotal } from './components/RollTotal'
-import { sumDice } from './domain/dice'
+import { findCombo, forceCombination, type Combo } from './domain/combos'
+import { setDiceValues, sumDice, type Die } from './domain/dice'
 import { DEFAULT_DIE_APPEARANCE, type DieAppearance } from './domain/dieAppearance'
 import { useDiceGame } from './hooks/useDiceGame'
 import { useDiceThrow } from './hooks/useDiceThrow'
@@ -18,6 +21,11 @@ import './App.css'
 const DiceScene3D = lazy(() =>
   import('./components/DiceScene3D').then(module => ({ default: module.DiceScene3D })),
 )
+
+interface ComboEffect {
+  combo: Combo
+  key: number
+}
 
 function App() {
   const { dice, rollCount, history, roll, applyRollResult, toggleDieHold, setDiceCount, reset } =
@@ -28,6 +36,30 @@ function App() {
   const [throwRequest3d, setThrowRequest3d] = useState(0)
   const [recenterRequest3d, setRecenterRequest3d] = useState(0)
   const [isThrowing3d, setIsThrowing3d] = useState(false)
+  const [comboEffect, setComboEffect] = useState<ComboEffect | null>(null)
+  const [fireworksKey, setFireworksKey] = useState(0)
+
+  const comboTimerRef = useRef<number | null>(null)
+
+  const clearComboEffect = () => {
+    if (comboTimerRef.current !== null) window.clearTimeout(comboTimerRef.current)
+    setComboEffect(null)
+  }
+
+  const revealCombo = (resolvedDice: readonly Die[]) => {
+    const combo = findCombo(resolvedDice)
+    if (combo === null) return
+    if (comboTimerRef.current !== null) window.clearTimeout(comboTimerRef.current)
+    setComboEffect(current => ({ combo, key: (current?.key ?? 0) + 1 }))
+    comboTimerRef.current = window.setTimeout(() => setComboEffect(null), COMBO_EFFECT_DURATION_MS)
+    if (combo.tier === 'quint') setFireworksKey(current => current + 1)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (comboTimerRef.current !== null) window.clearTimeout(comboTimerRef.current)
+    }
+  }, [])
 
   const arenaRef = useRef<HTMLDivElement>(null)
   const { isThrowing: isThrowing2d, scrambledValues, recenter } = useDiceThrow(
@@ -36,11 +68,13 @@ function App() {
     arenaRef,
     throwSettings,
     animationMode === '2d',
+    () => revealCombo(dice),
   )
   const isThrowing = animationMode === '2d' ? isThrowing2d : isThrowing3d
 
   const handleRoll = () => {
     if (isThrowing) return
+    clearComboEffect()
     if (animationMode === '2d') {
       roll()
       return
@@ -52,10 +86,21 @@ function App() {
   const handleRollResolved = (values: Readonly<Record<number, number>>) => {
     applyRollResult(values)
     setIsThrowing3d(false)
+    revealCombo(setDiceValues(dice, values))
+  }
+
+  const handleForceCombination = (comboSize: number) => {
+    if (isThrowing) return
+    clearComboEffect()
+    const values = forceCombination(dice, comboSize)
+    applyRollResult(values)
+    // En 2D l'animation de lancer révélera la combinaison à son terme.
+    if (animationMode === '3d') revealCombo(setDiceValues(dice, values))
   }
 
   const handleReset = () => {
     if (isThrowing) return
+    clearComboEffect()
     reset()
     handleRecenter()
   }
@@ -102,6 +147,7 @@ function App() {
         onAnimationModeChange={setAnimationMode}
         throwSettings={throwSettings}
         onThrowSettingsChange={setThrowSettings}
+        onForceCombination={handleForceCombination}
       />
       <main className="app-main">
         <div className="app-dice-area" ref={arenaRef}>
@@ -111,6 +157,7 @@ function App() {
               scrambledValues={scrambledValues}
               isThrowing={isThrowing}
               appearance={appearance}
+              combo={comboEffect?.combo ?? null}
               onToggleHold={toggleDieHold}
             />
           ) : (
@@ -121,6 +168,8 @@ function App() {
                 settings={throwSettings}
                 throwRequestCount={throwRequest3d}
                 recenterRequestCount={recenterRequest3d}
+                combo={comboEffect?.combo ?? null}
+                comboKey={comboEffect?.key ?? 0}
                 disabled={isThrowing}
                 onToggleHold={toggleDieHold}
                 onRollResolved={handleRollResolved}
@@ -134,6 +183,9 @@ function App() {
       <footer className="app-footer">
         <RollButton onRoll={handleRoll} disabled={isThrowing} />
       </footer>
+      {fireworksKey > 0 && (
+        <Fireworks key={fireworksKey} onDone={() => setFireworksKey(0)} />
+      )}
     </div>
   )
 }

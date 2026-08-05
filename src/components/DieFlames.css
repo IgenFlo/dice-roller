@@ -1,0 +1,53 @@
+.die-flames {
+  position: absolute;
+  inset: -24px -16px -10px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50% 50% 36% 36%;
+  background:
+    radial-gradient(closest-side at 22% 78%, var(--flame-hot), transparent 72%),
+    radial-gradient(closest-side at 50% 96%, var(--flame-core), transparent 78%),
+    radial-gradient(closest-side at 78% 78%, var(--flame-hot), transparent 72%),
+    radial-gradient(closest-side at 50% 40%, var(--flame-core), transparent 65%);
+  filter: blur(7px);
+  opacity: 0;
+  animation:
+    die-flames-fade var(--flame-duration) ease-out forwards,
+    die-flames-flicker 0.42s ease-in-out infinite alternate;
+}
+
+.die-flames--quad {
+  inset: -32px -22px -12px;
+  filter: blur(9px) saturate(1.25);
+  animation-duration: var(--flame-duration), 0.26s;
+}
+
+.die-flames--quint {
+  inset: -34px -24px -14px;
+  filter: blur(10px) saturate(1.3);
+  animation-duration: var(--flame-duration), 0.32s;
+}
+
+@keyframes die-flames-fade {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.95;
+  }
+  70% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes die-flames-flicker {
+  0% {
+    transform: scale(0.93, 0.88);
+  }
+  100% {
+    transform: scale(1.07, 1.14);
+  }
+}

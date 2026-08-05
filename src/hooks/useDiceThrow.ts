@@ -37,16 +37,19 @@ export function useDiceThrow(
   arenaRef: RefObject<HTMLDivElement | null>,
   settings: ThrowSettings,
   enabled: boolean,
+  onSettled: () => void,
 ): DiceThrowAnimation {
   const [isThrowing, setIsThrowing] = useState(false)
   const [scrambledValues, setScrambledValues] = useState<Record<number, number>>({})
   const lastSeenRollCountRef = useRef(rollCount)
   const diceRef = useRef(dice)
   const settingsRef = useRef(settings)
+  const onSettledRef = useRef(onSettled)
 
   useEffect(() => {
     diceRef.current = dice
     settingsRef.current = settings
+    onSettledRef.current = onSettled
   })
 
   const recenter = () => {
@@ -175,6 +178,7 @@ export function useDiceThrow(
       if (states.length === 0) {
         setIsThrowing(false)
         setScrambledValues({})
+        onSettledRef.current()
         return
       }
       frameId = requestAnimationFrame(tick)

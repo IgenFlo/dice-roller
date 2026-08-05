@@ -2,9 +2,15 @@ import { useEffect, useRef } from 'react'
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
+import {
+  COMBO_EFFECT_DURATION_MS,
+  COMBO_FLAME_COLORS,
+  COMBO_FLAME_INTENSITY,
+} from '../animation/comboEffects'
 import { createDieMaterials, disposeDieMaterials } from '../animation/threeDice/diceMaterials'
 import { getUpFace, quaternionForValueUp } from '../animation/threeDice/dieOrientation'
 import type { ThrowSettings } from '../animation/throwSettings'
+import type { Combo } from '../domain/combos'
 import type { Die } from '../domain/dice'
 import type { DieAppearance } from '../domain/dieAppearance'
 import { AURA_FACE_VALUE } from '../domain/dieFaces'
@@ -27,6 +33,10 @@ const GRID_MIN_SPACING = DIE_SIZE * 1.05
 const AURA_DURATION_MS = 1200
 const LOCK_SPRITE_SIZE = 0.62
 const LOCK_HEIGHT_ABOVE_DIE = 0.85
+const FLAME_SPAWN_INTERVAL_S = 0.045
+const FLAME_TTL_S = 0.65
+const FLAME_RISE_SPEED = 1.5
+const FLAME_BASE_SCALE = 0.5
 
 interface DiceScene3DProps {
   dice: Die[]
@@ -34,6 +44,8 @@ interface DiceScene3DProps {
   settings: ThrowSettings
   throwRequestCount: number
   recenterRequestCount: number
+  combo: Combo | null
+  comboKey: number
   disabled: boolean
   onToggleHold: (dieId: number) => void
   onRollResolved: (values: Readonly<Record<number, number>>) => void
@@ -57,6 +69,20 @@ interface ActiveAura {
   startedAt: number
 }
 
+interface FlameParticle {
+  sprite: THREE.Sprite
+  life: number
+  riseSpeed: number
+}
+
+interface FlameEmission {
+  dieIds: readonly number[]
+  colors: readonly [string, string]
+  particlesPerBurst: number
+  endsAt: number
+  accumulator: number
+}
+
 interface SceneContext {
   renderer: THREE.WebGLRenderer
   scene: THREE.Scene
@@ -72,6 +98,9 @@ interface SceneContext {
   activeThrow: ActiveThrow | null
   auraTexture: THREE.CanvasTexture
   activeAuras: ActiveAura[]
+  flameTexture: THREE.CanvasTexture
+  activeFlames: FlameParticle[]
+  flameEmission: FlameEmission | null
 }
 
 function createAuraTexture(): THREE.CanvasTexture {
@@ -164,6 +193,84 @@ function computeGridLayout(context: SceneContext, count: number): GridLayout {
   return { columns, rows, spacing }
 }
 
+function createFlameTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = 64
+  canvas.height = 64
+  const context = canvas.getContext('2d')
+  if (context !== null) {
+    const gradient = context.createRadialGradient(32, 38, 2, 32, 38, 30)
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
+    gradient.addColorStop(0.45, 'rgba(255, 255, 255, 0.55)')
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+    context.fillStyle = gradient
+    context.fillRect(0, 0, 64, 64)
+  }
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
+
+function spawnFlame(context: SceneContext, position: CANNON.Vec3, colors: readonly string[]): void {
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: context.flameTexture,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      transparent: true,
+      depthWrite: false,
+    }),
+  )
+  sprite.position.set(
+    position.x + (Math.random() - 0.5) * DIE_SIZE,
+    position.y - DIE_SIZE / 4,
+    position.z + (Math.random() - 0.5) * DIE_SIZE,
+  )
+  sprite.scale.set(FLAME_BASE_SCALE * 0.8, FLAME_BASE_SCALE, 1)
+  context.scene.add(sprite)
+  context.activeFlames.push({
+    sprite,
+    life: 0,
+    riseSpeed: FLAME_RISE_SPEED * (0.7 + Math.random() * 0.6),
+  })
+}
+
+function emitFlames(context: SceneContext, now: number, deltaSeconds: number): void {
+  const emission = context.flameEmission
+  if (emission === null) return
+  if (now > emission.endsAt) {
+    context.flameEmission = null
+    return
+  }
+  emission.accumulator += deltaSeconds
+  if (emission.accumulator < FLAME_SPAWN_INTERVAL_S) return
+  emission.accumulator = 0
+
+  for (const dieId of emission.dieIds) {
+    const sceneDie = context.sceneDice.get(dieId)
+    if (sceneDie === undefined) continue
+    for (let index = 0; index < emission.particlesPerBurst; index++) {
+      spawnFlame(context, sceneDie.body.position, emission.colors)
+    }
+  }
+}
+
+function advanceFlames(context: SceneContext, deltaSeconds: number): void {
+  context.activeFlames = context.activeFlames.filter(flame => {
+    flame.life += deltaSeconds
+    const progress = flame.life / FLAME_TTL_S
+    if (progress >= 1) {
+      context.scene.remove(flame.sprite)
+      flame.sprite.material.dispose()
+      return false
+    }
+    flame.sprite.position.y += flame.riseSpeed * deltaSeconds
+    const shrink = 1 - progress * 0.55
+    flame.sprite.scale.set(FLAME_BASE_SCALE * 0.8 * shrink, FLAME_BASE_SCALE * shrink, 1)
+    flame.sprite.material.opacity = 1 - progress ** 2
+    return true
+  })
+}
+
 function gridPosition(index: number, layout: GridLayout): { x: number; z: number } {
   const column = index % layout.columns
   const row = Math.floor(index / layout.columns)
@@ -252,6 +359,8 @@ export function DiceScene3D({
   settings,
   throwRequestCount,
   recenterRequestCount,
+  combo,
+  comboKey,
   disabled,
   onToggleHold,
   onRollResolved,
@@ -262,6 +371,7 @@ export function DiceScene3D({
   const appearanceRef = useRef(appearance)
   const settingsRef = useRef(settings)
   const disabledRef = useRef(disabled)
+  const comboRef = useRef(combo)
   const onToggleHoldRef = useRef(onToggleHold)
   const onRollResolvedRef = useRef(onRollResolved)
   const lastThrowRequestRef = useRef(throwRequestCount)
@@ -273,6 +383,7 @@ export function DiceScene3D({
     appearanceRef.current = appearance
     settingsRef.current = settings
     disabledRef.current = disabled
+    comboRef.current = combo
     onToggleHoldRef.current = onToggleHold
     onRollResolvedRef.current = onRollResolved
   })
@@ -365,6 +476,9 @@ export function DiceScene3D({
       activeThrow: null,
       auraTexture: createAuraTexture(),
       activeAuras: [],
+      flameTexture: createFlameTexture(),
+      activeFlames: [],
+      flameEmission: null,
     }
     contextRef.current = context
 
@@ -459,6 +573,8 @@ export function DiceScene3D({
       }
 
       advanceAuras(context, now)
+      emitFlames(context, now, deltaSeconds)
+      advanceFlames(context, deltaSeconds)
       renderer.render(scene, camera)
       frameId = requestAnimationFrame(tick)
     }
@@ -482,7 +598,12 @@ export function DiceScene3D({
         context.scene.remove(aura.sprite)
         aura.sprite.material.dispose()
       }
+      for (const flame of context.activeFlames) {
+        context.scene.remove(flame.sprite)
+        flame.sprite.material.dispose()
+      }
       context.auraTexture.dispose()
+      context.flameTexture.dispose()
       context.lockTexture.dispose()
       context.dieGeometry.dispose()
       renderer.dispose()
@@ -556,6 +677,19 @@ export function DiceScene3D({
     if (!isNewRequest || context === null) return
     arrangeDiceInGrid(context, diceRef.current)
   }, [recenterRequestCount])
+
+  useEffect(() => {
+    const context = contextRef.current
+    const activeCombo = comboRef.current
+    if (context === null || comboKey === 0 || activeCombo === null) return
+    context.flameEmission = {
+      dieIds: activeCombo.dieIds,
+      colors: COMBO_FLAME_COLORS[activeCombo.tier],
+      particlesPerBurst: COMBO_FLAME_INTENSITY[activeCombo.tier],
+      endsAt: performance.now() + COMBO_EFFECT_DURATION_MS,
+      accumulator: FLAME_SPAWN_INTERVAL_S,
+    }
+  }, [comboKey])
 
   const heldKey = dice.filter(die => die.isHeld).map(die => die.id).join('-')
   useEffect(() => {

@@ -1,13 +1,16 @@
 import type { CSSProperties } from 'react'
+import type { ComboTier } from '../domain/combos'
 import type { Die as DieModel } from '../domain/dice'
 import { DEFAULT_DIE_APPEARANCE, type DieAppearance } from '../domain/dieAppearance'
 import { DieFace } from './DieFace'
+import { DieFlames } from './DieFlames'
 import './Die.css'
 
 interface DieProps {
   die: DieModel
   displayValue: number
   disabled: boolean
+  comboTier: ComboTier | null
   onToggleHold: (dieId: number) => void
   appearance?: DieAppearance
 }
@@ -21,6 +24,7 @@ export function Die({
   die,
   displayValue,
   disabled,
+  comboTier,
   onToggleHold,
   appearance = DEFAULT_DIE_APPEARANCE,
 }: DieProps) {
@@ -31,6 +35,7 @@ export function Die({
 
   return (
     <div className="die-slot" data-die-id={die.id} style={style}>
+      {comboTier !== null && <DieFlames tier={comboTier} />}
       <button
         type="button"
         className={die.isHeld ? 'die die--held' : 'die'}
