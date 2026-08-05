@@ -26,10 +26,11 @@ function App() {
   const [animationMode, setAnimationMode] = useState<AnimationMode>('2d')
   const [throwSettings, setThrowSettings] = useState<ThrowSettings>(DEFAULT_THROW_SETTINGS)
   const [throwRequest3d, setThrowRequest3d] = useState(0)
+  const [recenterRequest3d, setRecenterRequest3d] = useState(0)
   const [isThrowing3d, setIsThrowing3d] = useState(false)
 
   const arenaRef = useRef<HTMLDivElement>(null)
-  const { isThrowing: isThrowing2d, scrambledValues } = useDiceThrow(
+  const { isThrowing: isThrowing2d, scrambledValues, recenter } = useDiceThrow(
     dice,
     rollCount,
     arenaRef,
@@ -56,6 +57,16 @@ function App() {
   const handleReset = () => {
     if (isThrowing) return
     reset()
+    handleRecenter()
+  }
+
+  const handleRecenter = () => {
+    if (isThrowing) return
+    if (animationMode === '2d') {
+      recenter()
+      return
+    }
+    setRecenterRequest3d(count => count + 1)
   }
 
   const handleRollRef = useRef(handleRoll)
@@ -85,6 +96,7 @@ function App() {
         appearance={appearance}
         onAppearanceChange={setAppearance}
         onReset={handleReset}
+        onRecenter={handleRecenter}
         controlsDisabled={isThrowing}
         animationMode={animationMode}
         onAnimationModeChange={setAnimationMode}
@@ -108,6 +120,7 @@ function App() {
                 appearance={appearance}
                 settings={throwSettings}
                 throwRequestCount={throwRequest3d}
+                recenterRequestCount={recenterRequest3d}
                 disabled={isThrowing}
                 onToggleHold={toggleDieHold}
                 onRollResolved={handleRollResolved}

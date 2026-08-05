@@ -6,6 +6,10 @@
   will-change: transform;
 }
 
+.die-slot--recentering {
+  transition: transform 0.4s ease;
+}
+
 .die {
   display: flex;
   align-items: center;

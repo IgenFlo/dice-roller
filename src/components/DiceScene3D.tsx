@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { createDieMaterials, disposeDieMaterials } from '../animation/threeDice/diceMaterials'
 import { getUpFaceValue, quaternionForValueUp } from '../animation/threeDice/dieOrientation'
 import type { ThrowSettings } from '../animation/throwSettings'
@@ -25,6 +26,7 @@ interface DiceScene3DProps {
   appearance: DieAppearance
   settings: ThrowSettings
   throwRequestCount: number
+  recenterRequestCount: number
   disabled: boolean
   onToggleHold: (dieId: number) => void
   onRollResolved: (values: Readonly<Record<number, number>>) => void
@@ -48,7 +50,7 @@ interface SceneContext {
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   world: CANNON.World
-  dieGeometry: THREE.BoxGeometry
+  dieGeometry: THREE.BufferGeometry
   ringGeometry: THREE.RingGeometry
   diceMaterial: CANNON.Material
   contactMaterials: CANNON.ContactMaterial[]
@@ -69,6 +71,19 @@ function gridPosition(index: number, count: number): { x: number; z: number } {
   }
 }
 
+function arrangeDiceInGrid(context: SceneContext, dice: readonly Die[]): void {
+  dice.forEach((die, index) => {
+    const sceneDie = context.sceneDice.get(die.id)
+    if (sceneDie === undefined) return
+    const { x, z } = gridPosition(index, dice.length)
+    sceneDie.body.position.set(x, DIE_SIZE / 2, z)
+    const orientation = quaternionForValueUp(die.value)
+    sceneDie.body.quaternion.set(orientation.x, orientation.y, orientation.z, orientation.w)
+    sceneDie.body.velocity.setZero()
+    sceneDie.body.angularVelocity.setZero()
+  })
+}
+
 function isBodyCalm(body: CANNON.Body): boolean {
   return (
     body.velocity.length() < SETTLE_LINEAR_SPEED &&
@@ -81,6 +96,7 @@ export function DiceScene3D({
   appearance,
   settings,
   throwRequestCount,
+  recenterRequestCount,
   disabled,
   onToggleHold,
   onRollResolved,
@@ -94,6 +110,7 @@ export function DiceScene3D({
   const onToggleHoldRef = useRef(onToggleHold)
   const onRollResolvedRef = useRef(onRollResolved)
   const lastThrowRequestRef = useRef(throwRequestCount)
+  const lastRecenterRequestRef = useRef(recenterRequestCount)
   const skipNextValueSyncRef = useRef(false)
 
   useEffect(() => {
@@ -119,8 +136,9 @@ export function DiceScene3D({
     camera.position.set(0, 11.5, 7.5)
     camera.lookAt(0, 0, 0)
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.65))
-    const sunLight = new THREE.DirectionalLight(0xffffff, 1.4)
+    scene.add(new THREE.AmbientLight(0xffffff, 1.4))
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xdde4ee, 0.8))
+    const sunLight = new THREE.DirectionalLight(0xffffff, 2)
     sunLight.position.set(4, 10, 4)
     sunLight.castShadow = true
     sunLight.shadow.camera.left = -10
@@ -182,7 +200,7 @@ export function DiceScene3D({
       scene,
       camera,
       world,
-      dieGeometry: new THREE.BoxGeometry(DIE_SIZE, DIE_SIZE, DIE_SIZE),
+      dieGeometry: new RoundedBoxGeometry(DIE_SIZE, DIE_SIZE, DIE_SIZE, 4, 0.14),
       ringGeometry: new THREE.RingGeometry(0.75, 0.92, 32),
       diceMaterial,
       contactMaterials,
@@ -362,17 +380,16 @@ export function DiceScene3D({
     }
     const context = contextRef.current
     if (context === null) return
-    diceRef.current.forEach((die, index) => {
-      const sceneDie = context.sceneDice.get(die.id)
-      if (sceneDie === undefined) return
-      const { x, z } = gridPosition(index, diceRef.current.length)
-      sceneDie.body.position.set(x, DIE_SIZE / 2, z)
-      const orientation = quaternionForValueUp(die.value)
-      sceneDie.body.quaternion.set(orientation.x, orientation.y, orientation.z, orientation.w)
-      sceneDie.body.velocity.setZero()
-      sceneDie.body.angularVelocity.setZero()
-    })
+    arrangeDiceInGrid(context, diceRef.current)
   }, [valuesKey])
+
+  useEffect(() => {
+    const isNewRequest = recenterRequestCount !== lastRecenterRequestRef.current
+    lastRecenterRequestRef.current = recenterRequestCount
+    const context = contextRef.current
+    if (!isNewRequest || context === null) return
+    arrangeDiceInGrid(context, diceRef.current)
+  }, [recenterRequestCount])
 
   const heldKey = dice.filter(die => die.isHeld).map(die => die.id).join('-')
   useEffect(() => {

@@ -12,35 +12,20 @@ import { randomFaceValue, type Die } from '../domain/dice'
 
 const MAX_THROW_DURATION_S = 2.5
 const MAX_FRAME_DELTA_S = 0.032
-const SETTLE_DURATION_MS = 350
+const RECENTER_DURATION_MS = 400
 const TUMBLE_LINEAR_DIVISOR = 260
 const TUMBLE_ANGULAR_DIVISOR = 420
 
 interface DiceThrowAnimation {
   isThrowing: boolean
   scrambledValues: Readonly<Record<number, number>>
+  recenter: () => void
 }
 
 interface DieSlot {
   element: HTMLElement
   x: number
   y: number
-}
-
-interface SettleTween {
-  startTime: number
-  fromX: number
-  fromY: number
-  fromAngle: number
-}
-
-function easeOutCubic(progress: number): number {
-  return 1 - (1 - progress) ** 3
-}
-
-function shortestAngleToZero(angle: number): number {
-  const normalized = ((angle % 360) + 360) % 360
-  return normalized > 180 ? normalized - 360 : normalized
 }
 
 export function useDiceThrow(
@@ -61,6 +46,20 @@ export function useDiceThrow(
     settingsRef.current = settings
   })
 
+  const recenter = () => {
+    const arena = arenaRef.current
+    if (arena === null) return
+    for (const element of arena.querySelectorAll<HTMLElement>('[data-die-id]')) {
+      if (element.style.transform === '') continue
+      element.classList.add('die-slot--recentering')
+      element.style.transform = ''
+      window.setTimeout(
+        () => element.classList.remove('die-slot--recentering'),
+        RECENTER_DURATION_MS,
+      )
+    }
+  }
+
   useEffect(() => {
     const isNewRoll = rollCount !== lastSeenRollCountRef.current
     lastSeenRollCountRef.current = rollCount
@@ -71,11 +70,12 @@ export function useDiceThrow(
     const arenaRect = arena.getBoundingClientRect()
     const slots = new Map<number, DieSlot>()
     for (const element of arena.querySelectorAll<HTMLElement>('[data-die-id]')) {
+      element.classList.remove('die-slot--recentering')
       const rect = element.getBoundingClientRect()
       slots.set(Number(element.dataset.dieId), {
         element,
-        x: rect.left - arenaRect.left + rect.width / 2,
-        y: rect.top - arenaRect.top + rect.height / 2,
+        x: rect.left - arenaRect.left + rect.width / 2 - readTranslation(element, 'x'),
+        y: rect.top - arenaRect.top + rect.height / 2 - readTranslation(element, 'y'),
       })
     }
 
@@ -94,7 +94,6 @@ export function useDiceThrow(
     let states: ThrownDie[] = thrownIds.map(id =>
       createThrownDie(id, throwArena, throwSettings, Math.random),
     )
-    const settleTweens = new Map<number, SettleTween>()
     const tumbleAccumulators = new Map<number, number>()
     const doneIds = new Set<number>()
 
@@ -106,7 +105,6 @@ export function useDiceThrow(
     let elapsedSeconds = 0
 
     const animateFlyingDie = (state: ThrownDie, slot: DieSlot, deltaSeconds: number) => {
-      settleTweens.delete(state.id)
       const offsetX = state.x - slot.x
       const offsetY = state.y - slot.y
       slot.element.style.transform =
@@ -125,32 +123,16 @@ export function useDiceThrow(
       setScrambledValues(current => ({ ...current, [state.id]: randomFaceValue() }))
     }
 
-    const animateSettlingDie = (state: ThrownDie, slot: DieSlot, now: number) => {
-      let tween = settleTweens.get(state.id)
-      if (tween === undefined) {
-        tween = {
-          startTime: now,
-          fromX: state.x - slot.x,
-          fromY: state.y - slot.y,
-          fromAngle: shortestAngleToZero(state.angle),
-        }
-        settleTweens.set(state.id, tween)
-        setScrambledValues(current => {
-          const next = { ...current }
-          delete next[state.id]
-          return next
-        })
-      }
-
-      const progress = Math.min((now - tween.startTime) / SETTLE_DURATION_MS, 1)
-      if (progress >= 1) {
-        slot.element.style.transform = ''
-        doneIds.add(state.id)
-        return
-      }
-      const remaining = 1 - easeOutCubic(progress)
+    // Le dé reste là où il s'est arrêté : on fige sa transform et on révèle sa valeur.
+    const finalizeStoppedDie = (state: ThrownDie, slot: DieSlot) => {
       slot.element.style.transform =
-        `translate(${tween.fromX * remaining}px, ${tween.fromY * remaining}px) rotate(${tween.fromAngle * remaining}deg)`
+        `translate(${state.x - slot.x}px, ${state.y - slot.y}px) rotate(${state.angle}deg)`
+      doneIds.add(state.id)
+      setScrambledValues(current => {
+        const next = { ...current }
+        delete next[state.id]
+        return next
+      })
     }
 
     const tick = (now: number) => {
@@ -171,7 +153,7 @@ export function useDiceThrow(
         const slot = slots.get(state.id)
         if (slot === undefined) continue
         if (state.stopped) {
-          animateSettlingDie(state, slot, now)
+          finalizeStoppedDie(state, slot)
         } else {
           animateFlyingDie(state, slot, deltaSeconds)
         }
@@ -188,11 +170,17 @@ export function useDiceThrow(
 
     frameId = requestAnimationFrame(tick)
 
-    return () => {
-      cancelAnimationFrame(frameId)
-      for (const slot of slots.values()) slot.element.style.transform = ''
-    }
+    return () => cancelAnimationFrame(frameId)
   }, [rollCount, arenaRef, enabled])
 
-  return { isThrowing, scrambledValues }
+  return { isThrowing, scrambledValues, recenter }
+}
+
+// Les slots doivent être mesurés à leur position de grille : si un dé est resté
+// déplacé d'un lancer précédent, sa transform fausse getBoundingClientRect.
+function readTranslation(element: HTMLElement, axis: 'x' | 'y'): number {
+  const transform = element.style.transform
+  const match = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(transform)
+  if (match === null) return 0
+  return Number(axis === 'x' ? match[1] : match[2])
 }

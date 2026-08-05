@@ -11,6 +11,7 @@ interface HeaderProps {
   appearance: DieAppearance
   onAppearanceChange: (appearance: DieAppearance) => void
   onReset: () => void
+  onRecenter: () => void
   controlsDisabled: boolean
   animationMode: AnimationMode
   onAnimationModeChange: (mode: AnimationMode) => void
@@ -24,6 +25,7 @@ export function Header({
   appearance,
   onAppearanceChange,
   onReset,
+  onRecenter,
   controlsDisabled,
   animationMode,
   onAnimationModeChange,
@@ -70,6 +72,14 @@ export function Header({
             />
           </div>
         </details>
+        <button
+          type="button"
+          className="header-reset"
+          disabled={controlsDisabled}
+          onClick={onRecenter}
+        >
+          Recentrer
+        </button>
         <button type="button" className="header-reset" disabled={controlsDisabled} onClick={onReset}>
           Réinitialiser
         </button>
