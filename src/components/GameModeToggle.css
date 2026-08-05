@@ -1,0 +1,30 @@
+.game-mode-toggle {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.game-mode-toggle button {
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.game-mode-toggle button.game-mode-toggle-active {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .game-mode-toggle button {
+    padding: 5px 9px;
+    font-size: 11px;
+  }
+}

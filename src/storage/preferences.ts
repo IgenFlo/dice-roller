@@ -1,6 +1,8 @@
 import type { AnimationMode } from '../animation/throwSettings';
 import { DEFAULT_DICE_COUNT, MAX_DICE_COUNT, MIN_DICE_COUNT } from '../domain/dice';
 import { DEFAULT_DIE_APPEARANCE, type DieAppearance } from '../domain/dieAppearance';
+import { DEFAULT_GAME_MODE, type GameMode } from '../domain/gameMode';
+import { readJson, writeJson } from './localStore';
 
 /**
  * Réglages d'affichage retrouvés d'une visite à l'autre sur le même appareil.
@@ -10,12 +12,14 @@ export interface Preferences {
   readonly diceCount: number;
   readonly appearance: DieAppearance;
   readonly animationMode: AnimationMode;
+  readonly gameMode: GameMode;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   diceCount: DEFAULT_DICE_COUNT,
   appearance: DEFAULT_DIE_APPEARANCE,
   animationMode: '2d',
+  gameMode: DEFAULT_GAME_MODE,
 };
 
 const STORAGE_KEY = 'dice-roller.preferences';
@@ -23,25 +27,11 @@ const STORAGE_KEY = 'dice-roller.preferences';
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 export function loadPreferences(): Preferences {
-  return parsePreferences(readStoredValue());
+  return parsePreferences(readJson(STORAGE_KEY));
 }
 
 export function savePreferences(preferences: Preferences): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
-  } catch {
-    // Rien à rattraper : la partie en cours reste jouable sans stockage.
-  }
-}
-
-function readStoredValue(): unknown {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw === null ? null : JSON.parse(raw);
-  } catch {
-    // Stockage refusé (navigation privée, cookies bloqués) ou contenu illisible.
-    return null;
-  }
+  writeJson(STORAGE_KEY, preferences);
 }
 
 /**
@@ -57,6 +47,9 @@ function parsePreferences(value: unknown): Preferences {
     animationMode: stored.animationMode === '3d' || stored.animationMode === '2d'
       ? stored.animationMode
       : DEFAULT_PREFERENCES.animationMode,
+    gameMode: stored.gameMode === 'photos' || stored.gameMode === 'classic'
+      ? stored.gameMode
+      : DEFAULT_PREFERENCES.gameMode,
   };
 }
 

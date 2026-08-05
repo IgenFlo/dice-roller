@@ -236,6 +236,29 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
   Yam's et historique en opacité seulement : les retirer du flux recadrerait la
   caméra 3D en plein geste.
 
+## Itération 12 (2026-08-06) — modes de jeu et dés photo
+
+- Sélecteur de mode en haut à gauche de la zone de dés, en miroir de la bascule
+  2D/3D : « Classique » (défaut) et « Photos ». Le mode est mémorisé avec les
+  autres préférences.
+- Mode photos : `PhotoFacesEditor` remplit les six faces depuis la galerie
+  (sélection multiple qui complète les faces vides dans l'ordre) ou depuis la
+  caméra (`capture="environment"`, par face). Une face sans photo garde ses
+  points, donc le dé reste jouable à tout moment.
+- Chaque image est recadrée au carré et réduite à 256 px avant d'être gardée
+  (`src/photos/photoFile.ts`). C'est ce qui rend le stockage local possible et
+  borne la mémoire GPU : en 3D chaque dé porte son propre jeu de six textures,
+  donc la taille se paie autant de fois qu'il y a de dés. Le passage par un
+  `<img>` puis `drawImage` applique l'orientation EXIF des photos de téléphone.
+- Les photos sont stockées sous une clé distincte des autres préférences : un
+  quota dépassé ne doit pas emporter les réglages. Chaque entrée relue est
+  validée seule (préfixe `data:image/`), et la longueur est toujours ramenée à 6.
+- Aucun effet de combinaison dans ce mode : un unique `comboEffectsEnabled`
+  coupe `revealCombo`, les flammes, le halo du 6 en 2D comme en 3D, le feu
+  d'artifice et les bandeaux Yam's.
+- `src/storage/localStore.ts` factorise l'accès tolérant au `localStorage`,
+  partagé par les préférences et les photos.
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).

@@ -3,10 +3,21 @@
 Lanceur de dés à 6 faces. Aucun compte, aucun serveur.
 
 Seules les **préférences d'affichage** (nombre de dés, couleurs du dé, mode
-2D/3D) survivent d'une visite à l'autre, dans le `localStorage` de l'appareil
-(`src/storage/preferences.ts`). L'**état de partie** — valeurs des dés, dés
-bloqués, historique, réglages d'animation — reste volatil : chaque ouverture
-repart d'une table vierge.
+2D/3D, mode de jeu) survivent d'une visite à l'autre, dans le `localStorage` de
+l'appareil (`src/storage/preferences.ts`), de même que les photos des faces
+(`src/storage/photoFaces.ts`, clé séparée). L'**état de partie** — valeurs des
+dés, dés bloqués, historique, réglages d'animation — reste volatil : chaque
+ouverture repart d'une table vierge.
+
+## Modes de jeu
+
+- **Classique** : dés à points, avec combinaisons, flammes, halo du 6, feu
+  d'artifice et analyse Yam's.
+- **Photos** : les six faces portent les photos du joueur (galerie ou caméra).
+  Une face sans photo garde ses points. **Aucun effet de combinaison n'existe
+  dans ce mode** — ni bandeaux Yam's, ni flammes, ni halo, ni feu d'artifice :
+  un 6 n'y a pas plus de sens qu'un 3. Le drapeau unique est
+  `comboEffectsEnabled` dans `App`.
 
 Spécification détaillée et historique des itérations :
 `docs/superpowers/specs/2026-08-02-dice-roller-design.md`.
@@ -24,7 +35,10 @@ ou les panneaux d'information doit être relue à travers cette liste.
 - Le header est repliable et **replié par défaut** : il ne montre alors que
   « Réglages » et « Recentrer ».
 - La bascule 2D/3D est en survol, en haut à droite de la zone de dés — jamais
-  dans les réglages.
+  dans les réglages. Le **sélecteur de mode de jeu** lui répond en haut à gauche,
+  avec le bouton d'accès aux photos. En paysage, ce coin repousse le total en
+  dessous (`.roll-total { top: 30px }`) et creuse le retrait haut des bandeaux
+  Yam's : les trois se disputent le même angle.
 - Le bouton de lancer porte un geste : appui simple = lancer, appui maintenu +
   swipe vers le haut = lancer visé. Pendant la visée il ne reste que les dés et
   le footer ; les autres blocs s'effacent **en opacité seulement**, jamais en

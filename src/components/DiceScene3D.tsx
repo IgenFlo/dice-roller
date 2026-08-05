@@ -11,6 +11,7 @@ import type { Combo } from '../domain/combos'
 import type { Die } from '../domain/dice'
 import type { DieAppearance } from '../domain/dieAppearance'
 import { AURA_FACE_VALUE } from '../domain/dieFaces'
+import type { PhotoFaces } from '../domain/photoFaces'
 import './DiceScene3D.css'
 
 const AREA_DEPTH = 8
@@ -57,6 +58,8 @@ const FLAME_DRIFT_SPEED = 0.45
 interface DiceScene3DProps {
   dice: Die[]
   appearance: DieAppearance
+  photoFaces: PhotoFaces
+  aurasEnabled: boolean
   settings: ThrowSettings
   throwImpulse: ThrowImpulse | null
   throwRequestCount: number
@@ -544,6 +547,8 @@ function launchDie(
 export function DiceScene3D({
   dice,
   appearance,
+  photoFaces,
+  aurasEnabled,
   settings,
   throwImpulse,
   throwRequestCount,
@@ -558,6 +563,8 @@ export function DiceScene3D({
   const contextRef = useRef<SceneContext | null>(null)
   const diceRef = useRef(dice)
   const appearanceRef = useRef(appearance)
+  const photoFacesRef = useRef(photoFaces)
+  const aurasEnabledRef = useRef(aurasEnabled)
   const settingsRef = useRef(settings)
   const throwImpulseRef = useRef(throwImpulse)
   const disabledRef = useRef(disabled)
@@ -572,6 +579,8 @@ export function DiceScene3D({
   useEffect(() => {
     diceRef.current = dice
     appearanceRef.current = appearance
+    photoFacesRef.current = photoFaces
+    aurasEnabledRef.current = aurasEnabled
     settingsRef.current = settings
     throwImpulseRef.current = throwImpulse
     disabledRef.current = disabled
@@ -754,7 +763,7 @@ export function DiceScene3D({
           })
           for (const [id, value] of entries) {
             const sceneDie = context.sceneDice.get(id)
-            if (value === AURA_FACE_VALUE && sceneDie !== undefined) {
+            if (aurasEnabledRef.current && value === AURA_FACE_VALUE && sceneDie !== undefined) {
               spawnAura(context, sceneDie.body.position, appearanceRef.current.pipColor)
             }
           }
@@ -829,7 +838,10 @@ export function DiceScene3D({
 
     const currentDice = diceRef.current
     for (const die of currentDice) {
-      const mesh = new THREE.Mesh(context.dieGeometry, createDieMaterials(appearanceRef.current))
+      const mesh = new THREE.Mesh(
+        context.dieGeometry,
+        createDieMaterials(appearanceRef.current, photoFacesRef.current),
+      )
       mesh.castShadow = true
       mesh.userData.dieId = die.id
 
@@ -943,7 +955,7 @@ export function DiceScene3D({
     if (context === null) return
     for (const sceneDie of context.sceneDice.values()) {
       const oldMaterials = sceneDie.mesh.material
-      sceneDie.mesh.material = createDieMaterials(appearance)
+      sceneDie.mesh.material = createDieMaterials(appearance, photoFaces)
       if (Array.isArray(oldMaterials)) {
         disposeDieMaterials(
           oldMaterials.filter(material => material instanceof THREE.MeshStandardMaterial),
@@ -951,7 +963,7 @@ export function DiceScene3D({
       }
       sceneDie.lock.material.color.set(appearance.pipColor)
     }
-  }, [appearance])
+  }, [appearance, photoFaces])
 
   useEffect(() => {
     const isNewRequest = throwRequestCount !== lastThrowRequestRef.current

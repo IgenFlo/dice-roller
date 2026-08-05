@@ -3,9 +3,14 @@ import './DieFace.css'
 
 interface DieFaceProps {
   value: number
+  photo?: string | null
 }
 
-export function DieFace({ value }: DieFaceProps) {
+export function DieFace({ value, photo = null }: DieFaceProps) {
+  if (photo !== null) {
+    return <img className="die-face-photo" src={photo} alt={`Dé affichant la photo ${value}`} />
+  }
+
   const pipPositions = PIP_LAYOUTS[value] ?? []
 
   return (

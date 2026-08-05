@@ -1,11 +1,14 @@
 import * as THREE from 'three';
 import type { DieAppearance } from '../../domain/dieAppearance';
 import { PIP_LAYOUTS, PIP_RADIUS } from '../../domain/dieFaces';
+import { EMPTY_PHOTO_FACES, photoFaceFor, type PhotoFaces } from '../../domain/photoFaces';
 import { FACE_VALUES } from './dieOrientation';
 
 const TEXTURE_SIZE = 128;
 
-function createFaceTexture(value: number, appearance: DieAppearance): THREE.CanvasTexture {
+const textureLoader = new THREE.TextureLoader();
+
+function createPipTexture(value: number, appearance: DieAppearance): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = TEXTURE_SIZE;
   canvas.height = TEXTURE_SIZE;
@@ -31,11 +34,27 @@ function createFaceTexture(value: number, appearance: DieAppearance): THREE.Canv
   return texture;
 }
 
-export function createDieMaterials(appearance: DieAppearance): THREE.MeshStandardMaterial[] {
+/** Les photos étant déjà recadrées au carré, elles habillent la face telle quelle. */
+function createFaceTexture(
+  value: number,
+  appearance: DieAppearance,
+  photoFaces: PhotoFaces,
+): THREE.Texture {
+  const photo = photoFaceFor(photoFaces, value);
+  if (photo === null) return createPipTexture(value, appearance);
+  const texture = textureLoader.load(photo);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+export function createDieMaterials(
+  appearance: DieAppearance,
+  photoFaces: PhotoFaces = EMPTY_PHOTO_FACES,
+): THREE.MeshStandardMaterial[] {
   return FACE_VALUES.map(
     value =>
       new THREE.MeshStandardMaterial({
-        map: createFaceTexture(value, appearance),
+        map: createFaceTexture(value, appearance, photoFaces),
         roughness: 0.45,
         metalness: 0.05,
       }),

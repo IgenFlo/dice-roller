@@ -1,0 +1,148 @@
+/* Couvre la seule zone de dés : le bouton de lancer et le header restent atteignables. */
+.photo-faces-editor {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.photo-faces-editor-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(420px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+}
+
+.photo-faces-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.photo-faces-editor-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.photo-faces-editor-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.photo-faces-editor-error {
+  margin: 0;
+  font-size: 12px;
+  color: #b91c1c;
+}
+
+.photo-faces-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.photo-faces-editor-slot {
+  position: relative;
+}
+
+.photo-faces-editor-tile {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  padding: 0;
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg);
+}
+
+.photo-faces-editor-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-faces-editor-placeholder {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.photo-faces-editor-actions {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: flex;
+  gap: 4px;
+}
+
+.photo-faces-editor-actions button {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.photo-faces-editor-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.photo-faces-editor-footer button,
+.photo-faces-editor-close {
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: background-color 0.15s;
+}
+
+.photo-faces-editor-footer button:hover:enabled,
+.photo-faces-editor-close:hover {
+  background: var(--color-bg);
+}
+
+.photo-faces-editor-footer button:disabled {
+  opacity: 0.5;
+}
+
+/* Paysage court : la carte s'étale en largeur pour rester entièrement visible. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .photo-faces-editor-card {
+    width: min(560px, 100%);
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .photo-faces-editor-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .photo-faces-editor-hint {
+    font-size: 11px;
+  }
+}

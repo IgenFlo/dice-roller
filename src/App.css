@@ -35,11 +35,40 @@
   min-height: 200px;
 }
 
+/* Coin haut gauche de la zone de dés, en miroir de la bascule 2D/3D. */
+.app-mode-corner {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-photo-button {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: background-color 0.15s;
+}
+
+.app-photo-button:hover {
+  background: var(--color-bg);
+}
+
 /* Pendant la visée, il ne reste que les dés et le bouton de lancer. Les blocs
    s'effacent sans quitter le flux : les faire disparaître redimensionnerait la
    zone de dés, donc le cadrage de la caméra 3D, en plein geste. */
 .header,
 .animation-mode-toggle,
+.app-mode-corner,
 .roll-total,
 .yams-rail,
 .roll-history {
@@ -48,6 +77,7 @@
 
 .app--aiming .header,
 .app--aiming .animation-mode-toggle,
+.app--aiming .app-mode-corner,
 .app--aiming .roll-total,
 .app--aiming .yams-rail,
 .app--aiming .roll-history {
@@ -88,6 +118,18 @@
     --yams-rail-width: 88px;
 
     gap: 0;
+  }
+
+  .app-mode-corner {
+    top: 2px;
+    left: 2px;
+    gap: 4px;
+  }
+
+  .app-photo-button {
+    min-height: 26px;
+    padding: 4px 8px;
+    font-size: 11px;
   }
 
   .app-scene-fallback {

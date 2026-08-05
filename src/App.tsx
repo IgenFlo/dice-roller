@@ -8,17 +8,22 @@ import {
 import { AnimationModeToggle } from './components/AnimationModeToggle'
 import { DiceGrid } from './components/DiceGrid'
 import { Fireworks } from './components/Fireworks'
+import { GameModeToggle } from './components/GameModeToggle'
 import { Header } from './components/Header'
+import { PhotoFacesEditor } from './components/PhotoFacesEditor'
 import { RollButton } from './components/RollButton'
 import { RollHistory } from './components/RollHistory'
 import { RollTotal } from './components/RollTotal'
 import { YamsPanel } from './components/YamsPanel'
 import { findCombo, keepComboOnHeldDice, type Combo } from './domain/combos'
-import { setDiceValues, sumDice, type Die } from './domain/dice'
+import { FACE_COUNT, setDiceValues, sumDice, type Die } from './domain/dice'
 import { YAMS_DICE_COUNT } from './domain/yams'
 import type { DieAppearance } from './domain/dieAppearance'
+import type { GameMode } from './domain/gameMode'
+import { photoFaceCount, type PhotoFaces } from './domain/photoFaces'
 import { useDiceGame } from './hooks/useDiceGame'
 import { useDiceThrow } from './hooks/useDiceThrow'
+import { loadPhotoFaces, savePhotoFaces } from './storage/photoFaces'
 import { loadPreferences, savePreferences } from './storage/preferences'
 import './App.css'
 
@@ -41,6 +46,9 @@ function App() {
   const [animationMode, setAnimationMode] = useState<AnimationMode>(
     initialPreferences.animationMode,
   )
+  const [gameMode, setGameMode] = useState<GameMode>(initialPreferences.gameMode)
+  const [photoFaces, setPhotoFaces] = useState<PhotoFaces>(loadPhotoFaces)
+  const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false)
   const [throwSettings, setThrowSettings] = useState<ThrowSettings>(DEFAULT_THROW_SETTINGS)
   const [throwImpulse, setThrowImpulse] = useState<ThrowImpulse | null>(null)
   const [isAiming, setIsAiming] = useState(false)
@@ -49,6 +57,10 @@ function App() {
   const [isThrowing3d, setIsThrowing3d] = useState(false)
   const [comboEffect, setComboEffect] = useState<ComboEffect | null>(null)
   const [fireworksKey, setFireworksKey] = useState(0)
+
+  // En mode photos, une face ne vaut plus un chiffre : combinaisons, flammes,
+  // halos, feu d'artifice et analyse Yam's n'ont plus d'objet.
+  const comboEffectsEnabled = gameMode === 'classic'
 
   // Les flammes brûlent tant que la combinaison reste sur la table.
   const clearComboEffect = () => setComboEffect(null)
@@ -65,6 +77,7 @@ function App() {
   // Le lancer résolu fait autorité : sans combinaison sur la table, tout s'éteint,
   // y compris les flammes conservées sur les dés bloqués pendant le jet.
   const revealCombo = (resolvedDice: readonly Die[]) => {
+    if (!comboEffectsEnabled) return
     const combo = findCombo(resolvedDice)
     setComboEffect(current => (combo === null ? null : { combo, key: (current?.key ?? 0) + 1 }))
     if (combo?.tier === 'quint') setFireworksKey(current => current + 1)
@@ -75,6 +88,13 @@ function App() {
     setDiceCount(count)
   }
 
+  const handleGameModeChange = (mode: GameMode) => {
+    setGameMode(mode)
+    clearComboEffect()
+    // Le mode photos sans aucune photo n'a rien à montrer : on ouvre l'éditeur.
+    if (mode === 'photos' && photoFaceCount(photoFaces) === 0) setIsPhotoEditorOpen(true)
+  }
+
   const arenaRef = useRef<HTMLDivElement>(null)
   const { isThrowing: isThrowing2d, scrambledValues, recenter } = useDiceThrow(
     dice,
@@ -83,6 +103,7 @@ function App() {
     throwSettings,
     throwImpulse,
     animationMode === '2d',
+    comboEffectsEnabled,
     () => revealCombo(dice),
   )
   const isThrowing = animationMode === '2d' ? isThrowing2d : isThrowing3d
@@ -127,8 +148,12 @@ function App() {
   })
 
   useEffect(() => {
-    savePreferences({ diceCount: dice.length, appearance, animationMode })
-  }, [dice.length, appearance, animationMode])
+    savePreferences({ diceCount: dice.length, appearance, animationMode, gameMode })
+  }, [dice.length, appearance, animationMode, gameMode])
+
+  useEffect(() => {
+    savePhotoFaces(photoFaces)
+  }, [photoFaces])
 
   useEffect(() => {
     const rollOnSpaceBar = (event: KeyboardEvent) => {
@@ -144,7 +169,9 @@ function App() {
   // pendant l'animation. En 3D l'entrée n'est créée qu'à la fin du lancer.
   const visibleHistory = animationMode === '2d' && isThrowing ? history.slice(1) : history
   // L'analyse Yam's n'a de sens qu'une fois les 5 dés lancés et révélés.
-  const showYamsPanel = dice.length === YAMS_DICE_COUNT && rollCount > 0 && !isThrowing
+  const showYamsPanel =
+    comboEffectsEnabled && dice.length === YAMS_DICE_COUNT && rollCount > 0 && !isThrowing
+  const activeCombo = comboEffectsEnabled ? (comboEffect?.combo ?? null) : null
 
   return (
     <div className={isAiming ? 'app app--aiming' : 'app'}>
@@ -161,6 +188,22 @@ function App() {
       />
       <main className="app-main">
         <div className="app-dice-area" ref={arenaRef}>
+          <div className="app-mode-corner">
+            <GameModeToggle
+              mode={gameMode}
+              onModeChange={handleGameModeChange}
+              disabled={isThrowing}
+            />
+            {gameMode === 'photos' && (
+              <button
+                type="button"
+                className="app-photo-button"
+                onClick={() => setIsPhotoEditorOpen(true)}
+              >
+                Photos {photoFaceCount(photoFaces)}/{FACE_COUNT}
+              </button>
+            )}
+          </div>
           <AnimationModeToggle
             mode={animationMode}
             onModeChange={setAnimationMode}
@@ -172,7 +215,8 @@ function App() {
               scrambledValues={scrambledValues}
               isThrowing={isThrowing}
               appearance={appearance}
-              combo={comboEffect?.combo ?? null}
+              photoFaces={photoFaces}
+              combo={activeCombo}
               onToggleHold={toggleDieHold}
             />
           ) : (
@@ -180,11 +224,13 @@ function App() {
               <DiceScene3D
                 dice={dice}
                 appearance={appearance}
+                photoFaces={photoFaces}
+                aurasEnabled={comboEffectsEnabled}
                 settings={throwSettings}
                 throwImpulse={throwImpulse}
                 throwRequestCount={throwRequest3d}
                 recenterRequestCount={recenterRequest3d}
-                combo={comboEffect?.combo ?? null}
+                combo={activeCombo}
                 comboKey={comboEffect?.key ?? 0}
                 disabled={isThrowing}
                 onToggleHold={toggleDieHold}
@@ -194,6 +240,13 @@ function App() {
           )}
           <RollTotal total={sumDice(dice)} isRolling={isThrowing} />
           {showYamsPanel && <YamsPanel dice={dice} />}
+          {isPhotoEditorOpen && (
+            <PhotoFacesEditor
+              faces={photoFaces}
+              onFacesChange={setPhotoFaces}
+              onClose={() => setIsPhotoEditorOpen(false)}
+            />
+          )}
         </div>
         <RollHistory entries={visibleHistory} />
       </main>

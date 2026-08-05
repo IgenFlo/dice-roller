@@ -9,6 +9,7 @@ import './Die.css'
 interface DieProps {
   die: DieModel
   displayValue: number
+  photo: string | null
   disabled: boolean
   comboTier: ComboTier | null
   onToggleHold: (dieId: number) => void
@@ -23,6 +24,7 @@ interface DieStyle extends CSSProperties {
 export function Die({
   die,
   displayValue,
+  photo,
   disabled,
   comboTier,
   onToggleHold,
@@ -43,7 +45,7 @@ export function Die({
         disabled={disabled}
         onClick={() => onToggleHold(die.id)}
       >
-        <DieFace value={displayValue} />
+        <DieFace value={displayValue} photo={photo} />
       </button>
       <span className="die-status">{die.isHeld ? 'Bloqué' : ''}</span>
     </div>

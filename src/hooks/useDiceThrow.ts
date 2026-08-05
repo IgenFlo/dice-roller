@@ -39,6 +39,7 @@ export function useDiceThrow(
   settings: ThrowSettings,
   impulse: ThrowImpulse | null,
   enabled: boolean,
+  aurasEnabled: boolean,
   onSettled: () => void,
 ): DiceThrowAnimation {
   const [isThrowing, setIsThrowing] = useState(false)
@@ -47,12 +48,14 @@ export function useDiceThrow(
   const diceRef = useRef(dice)
   const settingsRef = useRef(settings)
   const impulseRef = useRef(impulse)
+  const aurasEnabledRef = useRef(aurasEnabled)
   const onSettledRef = useRef(onSettled)
 
   useEffect(() => {
     diceRef.current = dice
     settingsRef.current = settings
     impulseRef.current = impulse
+    aurasEnabledRef.current = aurasEnabled
     onSettledRef.current = onSettled
   })
 
@@ -145,7 +148,7 @@ export function useDiceThrow(
       })
 
       const revealedValue = diceRef.current.find(die => die.id === state.id)?.value
-      if (revealedValue === AURA_FACE_VALUE) {
+      if (aurasEnabledRef.current && revealedValue === AURA_FACE_VALUE) {
         slot.element.classList.add('die-slot--aura')
         window.setTimeout(
           () => slot.element.classList.remove('die-slot--aura'),

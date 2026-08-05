@@ -6,3 +6,14 @@
 .die-face-pip {
   fill: var(--die-pip-color, #111);
 }
+
+/* La photo occupe toute la face, contrairement aux points qui gardent une marge.
+   Le rayon suit celui du dé, moins son liseré. */
+.die-face-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 13px;
+  object-fit: cover;
+}
