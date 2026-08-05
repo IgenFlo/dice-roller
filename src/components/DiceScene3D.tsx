@@ -23,6 +23,7 @@ const SETTLE_FRAMES = 18
 const COCKED_RETHROW_DELAY_MS = 5000
 const FLAT_ALIGNMENT_MIN = 0.96
 const ON_FLOOR_MAX_Y = DIE_SIZE * 0.85
+const WALL_VISIBILITY_MARGIN = 0.15
 const GRID_SPACING = 1.5
 const GRID_MAX_COLUMNS = 5
 const GRID_MIN_SPACING = DIE_SIZE * 1.05
@@ -303,15 +304,21 @@ function arrangeDiceInGrid(context: SceneContext, dice: readonly Die[]): void {
   })
 }
 
-// Profondeur à laquelle un bord du canvas (ndcY = 1 en haut, -1 en bas) coupe le
-// plateau : les murs épousent ainsi la zone réellement visible à l'écran.
-function edgeFloorZ(camera: THREE.PerspectiveCamera, ndcY: number): number {
+// Profondeur à laquelle un bord du canvas (ndcY = 1 en haut, -1 en bas) coupe un
+// plan horizontal donné : les murs épousent ainsi la zone visible à l'écran.
+function edgeFloorZ(camera: THREE.PerspectiveCamera, ndcY: number, planeHeight: number): number {
   const raycaster = new THREE.Raycaster()
   raycaster.setFromCamera(new THREE.Vector2(0, ndcY), camera)
-  const diePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -DIE_SIZE / 2)
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeHeight)
   const intersection = new THREE.Vector3()
-  const hit = raycaster.ray.intersectPlane(diePlane, intersection)
+  const hit = raycaster.ray.intersectPlane(plane, intersection)
   return hit === null ? (-ndcY * AREA_DEPTH) / 2 : intersection.z
+}
+
+// Vu d'en haut, c'est l'arête supérieure arrière d'un dé qui sort de l'écran en
+// premier : le mur du fond s'arrête donc avant le bord haut du canvas.
+function backWallZ(camera: THREE.PerspectiveCamera): number {
+  return edgeFloorZ(camera, 1, DIE_SIZE) + DIE_SIZE / 2 + WALL_VISIBILITY_MARGIN
 }
 
 function bodyQuaternion(body: CANNON.Body): THREE.Quaternion {
@@ -498,8 +505,8 @@ export function DiceScene3D({
       context.halfWidth = Math.min(MAX_HALF_WIDTH, (AREA_DEPTH / 2) * camera.aspect * 0.85)
       walls.left.position.set(-context.halfWidth, 0, 0)
       walls.right.position.set(context.halfWidth, 0, 0)
-      walls.back.position.set(0, 0, edgeFloorZ(camera, 1))
-      walls.front.position.set(0, 0, edgeFloorZ(camera, -1))
+      walls.back.position.set(0, 0, backWallZ(camera))
+      walls.front.position.set(0, 0, edgeFloorZ(camera, -1, DIE_SIZE / 2))
     }
     applySize(container.clientWidth, container.clientHeight)
     const resizeObserver = new ResizeObserver(entries => {
