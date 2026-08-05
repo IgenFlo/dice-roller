@@ -25,6 +25,11 @@ ou les panneaux d'information doit être relue à travers cette liste.
   « Réglages » et « Recentrer ».
 - La bascule 2D/3D est en survol, en haut à droite de la zone de dés — jamais
   dans les réglages.
+- Le bouton de lancer porte un geste : appui simple = lancer, appui maintenu +
+  swipe vers le haut = lancer visé. Pendant la visée il ne reste que les dés et
+  le footer ; les autres blocs s'effacent **en opacité seulement**, jamais en
+  quittant le flux — les retirer redimensionnerait la zone de dés et recadrerait
+  la caméra 3D en plein geste.
 
 ### 2. Tout doit tenir à l'écran
 

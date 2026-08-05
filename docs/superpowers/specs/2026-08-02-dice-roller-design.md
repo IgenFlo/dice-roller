@@ -213,6 +213,29 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
 - Panneau « Tests » supprimé du header, avec `forceCombination` et
   `TESTABLE_COMBO_SIZES` devenus orphelins.
 
+## Itération 11 (2026-08-06) — lancer au swipe
+
+- `src/animation/throwGesture.ts` traduit un geste pointeur en `ThrowImpulse`
+  (direction normalisée en repère écran + multiplicateur de puissance). Seuls
+  les échantillons des 120 dernières millisecondes comptent : un doigt
+  immobilisé avant le relâchement ne produit plus d'impulsion.
+- Le swipe doit être franc (≥ 400 px/s) et dirigé vers le haut ; la puissance
+  interpole entre 0,6× et 2,4× jusqu'à 3200 px/s. L'inclinaison est bornée à 60°
+  de la verticale : au-delà les dés glisseraient le long du bord bas.
+- Le lancer part **dès que le swipe est reconnu**, pendant le geste, et non au
+  relâchement : l'interface revient sous le doigt au moment du jet. Un appui
+  relâché sans swipe lance normalement, un `pointercancel` annule sans lancer.
+- Le bouton capture le pointeur (`setPointerCapture`) pour survivre au doigt qui
+  sort de sa surface, et porte `touch-action: none`. Les activations clavier sont
+  distinguées par `event.detail === 0`, les seules à ne pas passer par le pointeur.
+- `createThrownDie` (2D) et `launchDie` (3D) acceptent l'impulsion : l'axe y de
+  l'écran devient la profondeur z du plateau, et la gerbe se resserre (1,2 rad →
+  0,5 rad en 2D) pour que les dés suivent visiblement le geste. Sans impulsion,
+  les lancers restent identiques à l'itération précédente.
+- Pendant la visée, `.app--aiming` efface header, bascule 2D/3D, total, bandeaux
+  Yam's et historique en opacité seulement : les retirer du flux recadrerait la
+  caméra 3D en plein geste.
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).

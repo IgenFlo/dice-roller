@@ -1,4 +1,5 @@
 import type { RandomSource } from '../domain/dice';
+import type { ThrowImpulse } from './throwGesture';
 import type { ThrowSettings } from './throwSettings';
 
 export interface ThrowArena {
@@ -24,6 +25,8 @@ export interface ThrownDie {
 // hauteur simulée au-dessus du plateau (vue de dessus) rendue via le scale.
 const LAUNCH_SPEED_FACTOR = 1.6;
 const LAUNCH_SPREAD_RADIANS = 1.2;
+/** Lancer visé : la gerbe se resserre pour que les dés suivent le geste. */
+const AIMED_SPREAD_RADIANS = 0.5;
 const INITIAL_HEIGHT = 20;
 const GRAVITY = 2600;
 const HEIGHT_RESTITUTION_FACTOR = 0.8;
@@ -40,14 +43,16 @@ export function createThrownDie(
   id: number,
   arena: ThrowArena,
   settings: ThrowSettings,
+  impulse: ThrowImpulse | null,
   random: RandomSource,
 ): ThrownDie {
+  const power = settings.launchPower * (impulse?.power ?? 1);
   const launchSpeed =
-    (0.9 + random() * 0.5) *
-    Math.min(arena.width, arena.height) *
-    LAUNCH_SPEED_FACTOR *
-    settings.launchPower;
-  const direction = -Math.PI / 2 + (random() - 0.5) * LAUNCH_SPREAD_RADIANS;
+    (0.9 + random() * 0.5) * Math.min(arena.width, arena.height) * LAUNCH_SPEED_FACTOR * power;
+  const aim =
+    impulse === null ? -Math.PI / 2 : Math.atan2(impulse.directionY, impulse.directionX);
+  const spread = impulse === null ? LAUNCH_SPREAD_RADIANS : AIMED_SPREAD_RADIANS;
+  const direction = aim + (random() - 0.5) * spread;
   return {
     id,
     x: arena.width * (0.2 + random() * 0.6),
@@ -55,9 +60,9 @@ export function createThrownDie(
     velocityX: Math.cos(direction) * launchSpeed,
     velocityY: Math.sin(direction) * launchSpeed,
     angle: 0,
-    angularVelocity: (random() - 0.5) * 1600 * settings.launchPower,
+    angularVelocity: (random() - 0.5) * 1600 * power,
     height: INITIAL_HEIGHT,
-    verticalVelocity: (150 + random() * 250) * settings.launchPower,
+    verticalVelocity: (150 + random() * 250) * power,
     stopped: false,
   };
 }

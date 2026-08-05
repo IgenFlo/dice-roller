@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import type { ThrowImpulse } from './animation/throwGesture'
 import {
   DEFAULT_THROW_SETTINGS,
   type AnimationMode,
@@ -41,6 +42,8 @@ function App() {
     initialPreferences.animationMode,
   )
   const [throwSettings, setThrowSettings] = useState<ThrowSettings>(DEFAULT_THROW_SETTINGS)
+  const [throwImpulse, setThrowImpulse] = useState<ThrowImpulse | null>(null)
+  const [isAiming, setIsAiming] = useState(false)
   const [throwRequest3d, setThrowRequest3d] = useState(0)
   const [recenterRequest3d, setRecenterRequest3d] = useState(0)
   const [isThrowing3d, setIsThrowing3d] = useState(false)
@@ -78,14 +81,16 @@ function App() {
     rollCount,
     arenaRef,
     throwSettings,
+    throwImpulse,
     animationMode === '2d',
     () => revealCombo(dice),
   )
   const isThrowing = animationMode === '2d' ? isThrowing2d : isThrowing3d
 
-  const handleRoll = () => {
+  const handleRoll = (impulse: ThrowImpulse | null) => {
     if (isThrowing) return
     burnOnHeldDiceOnly()
+    setThrowImpulse(impulse)
     if (animationMode === '2d') {
       roll()
       return
@@ -129,7 +134,7 @@ function App() {
     const rollOnSpaceBar = (event: KeyboardEvent) => {
       if (event.code !== 'Space' || event.target !== document.body) return
       event.preventDefault()
-      handleRollRef.current()
+      handleRollRef.current(null)
     }
     window.addEventListener('keydown', rollOnSpaceBar)
     return () => window.removeEventListener('keydown', rollOnSpaceBar)
@@ -142,7 +147,7 @@ function App() {
   const showYamsPanel = dice.length === YAMS_DICE_COUNT && rollCount > 0 && !isThrowing
 
   return (
-    <div className="app">
+    <div className={isAiming ? 'app app--aiming' : 'app'}>
       <Header
         diceCount={dice.length}
         onDiceCountChange={handleDiceCountChange}
@@ -176,6 +181,7 @@ function App() {
                 dice={dice}
                 appearance={appearance}
                 settings={throwSettings}
+                throwImpulse={throwImpulse}
                 throwRequestCount={throwRequest3d}
                 recenterRequestCount={recenterRequest3d}
                 combo={comboEffect?.combo ?? null}
@@ -192,7 +198,7 @@ function App() {
         <RollHistory entries={visibleHistory} />
       </main>
       <footer className="app-footer">
-        <RollButton onRoll={handleRoll} disabled={isThrowing} />
+        <RollButton onRoll={handleRoll} onAimingChange={setIsAiming} disabled={isThrowing} />
       </footer>
       {fireworksKey > 0 && (
         <Fireworks key={fireworksKey} onDone={() => setFireworksKey(0)} />

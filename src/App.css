@@ -35,6 +35,26 @@
   min-height: 200px;
 }
 
+/* Pendant la visée, il ne reste que les dés et le bouton de lancer. Les blocs
+   s'effacent sans quitter le flux : les faire disparaître redimensionnerait la
+   zone de dés, donc le cadrage de la caméra 3D, en plein geste. */
+.header,
+.animation-mode-toggle,
+.roll-total,
+.yams-rail,
+.roll-history {
+  transition: opacity 0.18s ease;
+}
+
+.app--aiming .header,
+.app--aiming .animation-mode-toggle,
+.app--aiming .roll-total,
+.app--aiming .yams-rail,
+.app--aiming .roll-history {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .app-footer {
   display: flex;
   justify-content: center;

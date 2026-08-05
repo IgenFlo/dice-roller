@@ -9,6 +9,9 @@
   font-weight: 600;
   box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
   transition: background-color 0.15s, transform 0.1s, box-shadow 0.15s;
+  /* Le swipe de lancer doit rester au bouton : ni défilement, ni sélection. */
+  touch-action: none;
+  user-select: none;
 }
 
 .roll-button:hover:enabled {

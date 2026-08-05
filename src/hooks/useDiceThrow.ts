@@ -7,6 +7,7 @@ import {
   type ThrowArena,
   type ThrownDie,
 } from '../animation/diceThrowPhysics'
+import type { ThrowImpulse } from '../animation/throwGesture'
 import type { ThrowSettings } from '../animation/throwSettings'
 import { randomFaceValue, type Die } from '../domain/dice'
 import { AURA_FACE_VALUE } from '../domain/dieFaces'
@@ -36,6 +37,7 @@ export function useDiceThrow(
   rollCount: number,
   arenaRef: RefObject<HTMLDivElement | null>,
   settings: ThrowSettings,
+  impulse: ThrowImpulse | null,
   enabled: boolean,
   onSettled: () => void,
 ): DiceThrowAnimation {
@@ -44,11 +46,13 @@ export function useDiceThrow(
   const lastSeenRollCountRef = useRef(rollCount)
   const diceRef = useRef(dice)
   const settingsRef = useRef(settings)
+  const impulseRef = useRef(impulse)
   const onSettledRef = useRef(onSettled)
 
   useEffect(() => {
     diceRef.current = dice
     settingsRef.current = settings
+    impulseRef.current = impulse
     onSettledRef.current = onSettled
   })
 
@@ -98,7 +102,7 @@ export function useDiceThrow(
     }
 
     let states: ThrownDie[] = thrownIds.map(id =>
-      createThrownDie(id, throwArena, throwSettings, Math.random),
+      createThrownDie(id, throwArena, throwSettings, impulseRef.current, Math.random),
     )
     const tumbleAccumulators = new Map<number, number>()
     const doneIds = new Set<number>()

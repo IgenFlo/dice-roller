@@ -5,6 +5,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { COMBO_FLAME_COLORS, COMBO_FLAME_INTENSITY } from '../animation/comboEffects'
 import { createDieMaterials, disposeDieMaterials } from '../animation/threeDice/diceMaterials'
 import { getUpFace, quaternionForValueUp } from '../animation/threeDice/dieOrientation'
+import type { ThrowImpulse } from '../animation/throwGesture'
 import type { ThrowSettings } from '../animation/throwSettings'
 import type { Combo } from '../domain/combos'
 import type { Die } from '../domain/dice'
@@ -57,6 +58,7 @@ interface DiceScene3DProps {
   dice: Die[]
   appearance: DieAppearance
   settings: ThrowSettings
+  throwImpulse: ThrowImpulse | null
   throwRequestCount: number
   recenterRequestCount: number
   combo: Combo | null
@@ -504,7 +506,12 @@ function isDieReadable(body: CANNON.Body): boolean {
   )
 }
 
-function launchDie(context: SceneContext, body: CANNON.Body, settings: ThrowSettings): void {
+function launchDie(
+  context: SceneContext,
+  body: CANNON.Body,
+  settings: ThrowSettings,
+  impulse: ThrowImpulse | null,
+): void {
   body.type = CANNON.Body.DYNAMIC
   // Un amortissement plancher garantit que les dés finissent par s'immobiliser,
   // même avec la friction réglée à zéro.
@@ -516,10 +523,15 @@ function launchDie(context: SceneContext, body: CANNON.Body, settings: ThrowSett
     1.2 + Math.random() * 1.5,
     context.walls.front.position.z - DIE_SIZE,
   )
+  // Le geste est en repère écran : l'axe y de l'écran devient la profondeur z,
+  // un swipe vers le haut (directionY < 0) envoie donc les dés vers le fond.
+  const power = settings.launchPower * (impulse?.power ?? 1)
+  const speed = (9 + Math.random() * 5) * power
+  const spread = impulse === null ? 6 : 2
   body.velocity.set(
-    (Math.random() - 0.5) * 6 * settings.launchPower,
-    (3.5 + Math.random() * 3) * settings.launchPower,
-    -(9 + Math.random() * 5) * settings.launchPower,
+    (impulse?.directionX ?? 0) * speed + (Math.random() - 0.5) * spread * power,
+    (3.5 + Math.random() * 3) * power,
+    (impulse?.directionY ?? -1) * speed,
   )
   body.angularVelocity.set(
     (Math.random() - 0.5) * 24,
@@ -533,6 +545,7 @@ export function DiceScene3D({
   dice,
   appearance,
   settings,
+  throwImpulse,
   throwRequestCount,
   recenterRequestCount,
   combo,
@@ -546,6 +559,7 @@ export function DiceScene3D({
   const diceRef = useRef(dice)
   const appearanceRef = useRef(appearance)
   const settingsRef = useRef(settings)
+  const throwImpulseRef = useRef(throwImpulse)
   const disabledRef = useRef(disabled)
   const comboRef = useRef(combo)
   const onToggleHoldRef = useRef(onToggleHold)
@@ -559,6 +573,7 @@ export function DiceScene3D({
     diceRef.current = dice
     appearanceRef.current = appearance
     settingsRef.current = settings
+    throwImpulseRef.current = throwImpulse
     disabledRef.current = disabled
     comboRef.current = combo
     onToggleHoldRef.current = onToggleHold
@@ -747,7 +762,8 @@ export function DiceScene3D({
         } else if (now - activeThrow.startedAt > COCKED_RETHROW_DELAY_MS) {
           for (const id of unreadableIds) {
             const body = context.sceneDice.get(id)?.body
-            if (body !== undefined) launchDie(context, body, settingsRef.current)
+            if (body !== undefined)
+              launchDie(context, body, settingsRef.current, throwImpulseRef.current)
           }
           activeThrow.startedAt = now
           activeThrow.settledFrames = 0
@@ -957,7 +973,7 @@ export function DiceScene3D({
       if (sceneDie === undefined) continue
 
       thrownIds.push(die.id)
-      launchDie(context, sceneDie.body, throwSettings)
+      launchDie(context, sceneDie.body, throwSettings, throwImpulseRef.current)
     }
 
     if (thrownIds.length === 0) {
