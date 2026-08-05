@@ -1,5 +1,4 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import { COMBO_EFFECT_DURATION_MS } from './animation/comboEffects'
 import {
   DEFAULT_THROW_SETTINGS,
   type AnimationMode,
@@ -39,27 +38,20 @@ function App() {
   const [comboEffect, setComboEffect] = useState<ComboEffect | null>(null)
   const [fireworksKey, setFireworksKey] = useState(0)
 
-  const comboTimerRef = useRef<number | null>(null)
-
-  const clearComboEffect = () => {
-    if (comboTimerRef.current !== null) window.clearTimeout(comboTimerRef.current)
-    setComboEffect(null)
-  }
+  // Les flammes brûlent tant que la combinaison reste sur la table.
+  const clearComboEffect = () => setComboEffect(null)
 
   const revealCombo = (resolvedDice: readonly Die[]) => {
     const combo = findCombo(resolvedDice)
     if (combo === null) return
-    if (comboTimerRef.current !== null) window.clearTimeout(comboTimerRef.current)
     setComboEffect(current => ({ combo, key: (current?.key ?? 0) + 1 }))
-    comboTimerRef.current = window.setTimeout(() => setComboEffect(null), COMBO_EFFECT_DURATION_MS)
     if (combo.tier === 'quint') setFireworksKey(current => current + 1)
   }
 
-  useEffect(() => {
-    return () => {
-      if (comboTimerRef.current !== null) window.clearTimeout(comboTimerRef.current)
-    }
-  }, [])
+  const handleDiceCountChange = (count: number) => {
+    clearComboEffect()
+    setDiceCount(count)
+  }
 
   const arenaRef = useRef<HTMLDivElement>(null)
   const { isThrowing: isThrowing2d, scrambledValues, recenter } = useDiceThrow(
@@ -137,7 +129,7 @@ function App() {
     <div className="app">
       <Header
         diceCount={dice.length}
-        onDiceCountChange={setDiceCount}
+        onDiceCountChange={handleDiceCountChange}
         appearance={appearance}
         onAppearanceChange={setAppearance}
         onReset={handleReset}

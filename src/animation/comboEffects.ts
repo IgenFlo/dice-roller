@@ -1,6 +1,10 @@
 import type { ComboTier } from '../domain/combos';
 
-export const COMBO_EFFECT_DURATION_MS = 3000;
+/**
+ * Les flammes brûlent tant que la combinaison est sur la table : seul leur
+ * allumage est temporisé.
+ */
+export const COMBO_FLAME_FADE_IN_MS = 400;
 
 /** Couleurs [cœur, extérieur] des flammes, partagées par le rendu 2D et 3D. */
 export const COMBO_FLAME_COLORS: Readonly<Record<ComboTier, readonly [string, string]>> = {

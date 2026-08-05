@@ -2,11 +2,7 @@ import { useEffect, useRef } from 'react'
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
-import {
-  COMBO_EFFECT_DURATION_MS,
-  COMBO_FLAME_COLORS,
-  COMBO_FLAME_INTENSITY,
-} from '../animation/comboEffects'
+import { COMBO_FLAME_COLORS, COMBO_FLAME_INTENSITY } from '../animation/comboEffects'
 import { createDieMaterials, disposeDieMaterials } from '../animation/threeDice/diceMaterials'
 import { getUpFace, quaternionForValueUp } from '../animation/threeDice/dieOrientation'
 import type { ThrowSettings } from '../animation/throwSettings'
@@ -84,7 +80,6 @@ interface FlameEmission {
   dieIds: readonly number[]
   colors: readonly [string, string]
   particlesPerBurst: number
-  endsAt: number
   accumulator: number
 }
 
@@ -247,13 +242,9 @@ function spawnFlame(context: SceneContext, position: CANNON.Vec3, colors: readon
   })
 }
 
-function emitFlames(context: SceneContext, now: number, deltaSeconds: number): void {
+function emitFlames(context: SceneContext, deltaSeconds: number): void {
   const emission = context.flameEmission
   if (emission === null) return
-  if (now > emission.endsAt) {
-    context.flameEmission = null
-    return
-  }
   emission.accumulator += deltaSeconds
   if (emission.accumulator < FLAME_SPAWN_INTERVAL_S) return
   emission.accumulator = 0
@@ -590,7 +581,7 @@ export function DiceScene3D({
       }
 
       advanceAuras(context, now)
-      emitFlames(context, now, deltaSeconds)
+      emitFlames(context, deltaSeconds)
       advanceFlames(context, deltaSeconds)
       renderer.render(scene, camera)
       frameId = requestAnimationFrame(tick)
@@ -695,18 +686,22 @@ export function DiceScene3D({
     arrangeDiceInGrid(context, diceRef.current)
   }, [recenterRequestCount])
 
+  const hasCombo = combo !== null
   useEffect(() => {
     const context = contextRef.current
+    if (context === null) return
     const activeCombo = comboRef.current
-    if (context === null || comboKey === 0 || activeCombo === null) return
+    if (activeCombo === null) {
+      context.flameEmission = null
+      return
+    }
     context.flameEmission = {
       dieIds: activeCombo.dieIds,
       colors: COMBO_FLAME_COLORS[activeCombo.tier],
       particlesPerBurst: COMBO_FLAME_INTENSITY[activeCombo.tier],
-      endsAt: performance.now() + COMBO_EFFECT_DURATION_MS,
       accumulator: FLAME_SPAWN_INTERVAL_S,
     }
-  }, [comboKey])
+  }, [comboKey, hasCombo])
 
   const heldKey = dice.filter(die => die.isHeld).map(die => die.id).join('-')
   useEffect(() => {

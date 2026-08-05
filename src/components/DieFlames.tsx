@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { COMBO_EFFECT_DURATION_MS, COMBO_FLAME_COLORS } from '../animation/comboEffects'
+import { COMBO_FLAME_COLORS, COMBO_FLAME_FADE_IN_MS } from '../animation/comboEffects'
 import type { ComboTier } from '../domain/combos'
 import './DieFlames.css'
 
@@ -10,7 +10,7 @@ interface DieFlamesProps {
 interface FlameStyle extends CSSProperties {
   '--flame-core': string
   '--flame-hot': string
-  '--flame-duration': string
+  '--flame-fade-in': string
 }
 
 export function DieFlames({ tier }: DieFlamesProps) {
@@ -18,7 +18,7 @@ export function DieFlames({ tier }: DieFlamesProps) {
   const style: FlameStyle = {
     '--flame-core': core,
     '--flame-hot': hot,
-    '--flame-duration': `${COMBO_EFFECT_DURATION_MS}ms`,
+    '--flame-fade-in': `${COMBO_FLAME_FADE_IN_MS}ms`,
   }
 
   return <span className={`die-flames die-flames--${tier}`} style={style} aria-hidden="true" />

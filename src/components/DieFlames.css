@@ -6,7 +6,7 @@
   border-radius: 50% 50% 40% 40%;
   box-shadow: 0 0 36px 10px var(--flame-hot);
   opacity: 0;
-  animation: die-flames-fade var(--flame-duration) ease-out forwards;
+  animation: die-flames-ignite var(--flame-fade-in) ease-out forwards;
 }
 
 .die-flames::before,
@@ -66,18 +66,12 @@
   animation-duration: 0.2s;
 }
 
-@keyframes die-flames-fade {
+@keyframes die-flames-ignite {
   0% {
     opacity: 0;
   }
-  8% {
-    opacity: 1;
-  }
-  72% {
-    opacity: 1;
-  }
   100% {
-    opacity: 0;
+    opacity: 1;
   }
 }
 
