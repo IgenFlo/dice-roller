@@ -20,7 +20,7 @@ import { FACE_COUNT, setDiceValues, sumDice, type Die } from './domain/dice'
 import { YAMS_DICE_COUNT } from './domain/yams'
 import type { DieAppearance } from './domain/dieAppearance'
 import type { GameMode } from './domain/gameMode'
-import { photoFaceCount, type PhotoFaces } from './domain/photoFaces'
+import { EMPTY_PHOTO_FACES, photoFaceCount, type PhotoFaces } from './domain/photoFaces'
 import { useDiceGame } from './hooks/useDiceGame'
 import { useDiceThrow } from './hooks/useDiceThrow'
 import { loadPhotoFaces, savePhotoFaces } from './storage/photoFaces'
@@ -61,6 +61,8 @@ function App() {
   // En mode photos, une face ne vaut plus un chiffre : combinaisons, flammes,
   // halos, feu d'artifice et analyse Yam's n'ont plus d'objet.
   const comboEffectsEnabled = gameMode === 'classic'
+  // Les photos restent mémorisées, mais seul le mode photos les montre.
+  const visiblePhotoFaces = gameMode === 'photos' ? photoFaces : EMPTY_PHOTO_FACES
 
   // Les flammes brûlent tant que la combinaison reste sur la table.
   const clearComboEffect = () => setComboEffect(null)
@@ -215,7 +217,7 @@ function App() {
               scrambledValues={scrambledValues}
               isThrowing={isThrowing}
               appearance={appearance}
-              photoFaces={photoFaces}
+              photoFaces={visiblePhotoFaces}
               combo={activeCombo}
               onToggleHold={toggleDieHold}
             />
@@ -224,7 +226,7 @@ function App() {
               <DiceScene3D
                 dice={dice}
                 appearance={appearance}
-                photoFaces={photoFaces}
+                photoFaces={visiblePhotoFaces}
                 aurasEnabled={comboEffectsEnabled}
                 settings={throwSettings}
                 throwImpulse={throwImpulse}
