@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  will-change: transform;
 }
 
 .die {

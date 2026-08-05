@@ -64,8 +64,13 @@
   transition: background-color 0.15s;
 }
 
-.header-reset:hover {
+.header-reset:hover:enabled {
   background: var(--color-bg);
+}
+
+.header-reset:disabled {
+  color: var(--color-border);
+  cursor: default;
 }
 
 @media (max-width: 600px) {

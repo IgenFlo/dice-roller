@@ -41,6 +41,23 @@ Recherche (FlipSimu, UplUp, DnD Dice Roller, avis d'apps mobiles) → ajouts :
   largeur, `safe-area-inset-bottom`, cibles tactiles ≥ 40 px, header sur plusieurs
   lignes sans perte d'information.
 
+## Itération 3 (2026-08-05) — lancer physique 2D
+
+Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
+
+- `src/animation/diceThrowPhysics.ts` : simulation pure (projection depuis le bas de
+  la zone, rebonds sur les parois et entre dés, friction, hauteur simulée avec
+  gravité rendue via le scale, arrêt sous un seuil de vitesse).
+- `src/hooks/useDiceThrow.ts` : boucle `requestAnimationFrame`, transforms appliqués
+  directement au DOM, défilement des faces proportionnel à la vitesse, retour en
+  douceur vers la grille dé par dé (chaque dé révèle sa vraie valeur à son arrêt).
+- Le résultat vient toujours du domaine ; l'animation est purement présentationnelle.
+- Contrôles (lancer, nombre de dés, reset, clic sur dé) désactivés pendant le lancer.
+- `prefers-reduced-motion` : résultat affiché instantanément, sans animation.
+- L'approche 3D (three.js + cannon-es, textures générées depuis les couleurs
+  custom, permutation des faces pour respecter le tirage du domaine) reste cadrée
+  comme itération possible.
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).

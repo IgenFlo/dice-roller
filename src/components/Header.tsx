@@ -9,6 +9,7 @@ interface HeaderProps {
   appearance: DieAppearance
   onAppearanceChange: (appearance: DieAppearance) => void
   onReset: () => void
+  controlsDisabled: boolean
 }
 
 export function Header({
@@ -17,6 +18,7 @@ export function Header({
   appearance,
   onAppearanceChange,
   onReset,
+  controlsDisabled,
 }: HeaderProps) {
   return (
     <header className="header">
@@ -26,7 +28,7 @@ export function Header({
           <button
             type="button"
             aria-label="Retirer un dé"
-            disabled={diceCount <= MIN_DICE_COUNT}
+            disabled={controlsDisabled || diceCount <= MIN_DICE_COUNT}
             onClick={() => onDiceCountChange(diceCount - 1)}
           >
             −
@@ -35,7 +37,7 @@ export function Header({
           <button
             type="button"
             aria-label="Ajouter un dé"
-            disabled={diceCount >= MAX_DICE_COUNT}
+            disabled={controlsDisabled || diceCount >= MAX_DICE_COUNT}
             onClick={() => onDiceCountChange(diceCount + 1)}
           >
             +
@@ -46,7 +48,12 @@ export function Header({
         <DieAppearancePicker appearance={appearance} onAppearanceChange={onAppearanceChange} />
       </div>
       <div className="header-group">
-        <button type="button" className="header-reset" onClick={onReset}>
+        <button
+          type="button"
+          className="header-reset"
+          disabled={controlsDisabled}
+          onClick={onReset}
+        >
           Réinitialiser
         </button>
       </div>

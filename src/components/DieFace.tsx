@@ -1,9 +1,7 @@
-import { ROLL_ANIMATION_DURATION_MS } from '../hooks/useRollAnimation'
 import './DieFace.css'
 
 interface DieFaceProps {
   value: number
-  isRolling: boolean
 }
 
 type PipPosition = readonly [number, number]
@@ -26,17 +24,11 @@ const PIP_LAYOUTS: Readonly<Record<number, readonly PipPosition[]>> = {
 
 const PIP_RADIUS = 9
 
-export function DieFace({ value, isRolling }: DieFaceProps) {
+export function DieFace({ value }: DieFaceProps) {
   const pipPositions = PIP_LAYOUTS[value] ?? []
 
   return (
-    <svg
-      className={isRolling ? 'die-face die-face--rolling' : 'die-face'}
-      style={isRolling ? { animationDuration: `${ROLL_ANIMATION_DURATION_MS}ms` } : undefined}
-      viewBox="0 0 100 100"
-      role="img"
-      aria-label={`Dé affichant ${value}`}
-    >
+    <svg className="die-face" viewBox="0 0 100 100" role="img" aria-label={`Dé affichant ${value}`}>
       {pipPositions.map(([x, y]) => (
         <circle key={`${x}-${y}`} className="die-face-pip" cx={x} cy={y} r={PIP_RADIUS} />
       ))}

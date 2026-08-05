@@ -5,17 +5,30 @@ import './DiceGrid.css'
 
 interface DiceGridProps {
   dice: DieModel[]
-  rollCount: number
+  scrambledValues: Readonly<Record<number, number>>
+  isThrowing: boolean
   appearance: DieAppearance
   onToggleHold: (dieId: number) => void
 }
 
-export function DiceGrid({ dice, rollCount, appearance, onToggleHold }: DiceGridProps) {
+export function DiceGrid({
+  dice,
+  scrambledValues,
+  isThrowing,
+  appearance,
+  onToggleHold,
+}: DiceGridProps) {
   return (
     <ul className="dice-grid">
       {dice.map(die => (
         <li key={die.id}>
-          <Die die={die} rollCount={rollCount} appearance={appearance} onToggleHold={onToggleHold} />
+          <Die
+            die={die}
+            displayValue={scrambledValues[die.id] ?? die.value}
+            disabled={isThrowing}
+            appearance={appearance}
+            onToggleHold={onToggleHold}
+          />
         </li>
       ))}
     </ul>
