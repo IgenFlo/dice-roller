@@ -106,6 +106,13 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
   Couleurs et durée partagées via `src/animation/comboEffects.ts`.
 - Feu d'artifice : `Fireworks`, canvas plein écran (fusées + gerbes d'étincelles
   avec gravité et traînées) sur un voile sombre momentané, `pointer-events: none`.
+- Flammes intensifiées (2026-08-05) : en 2D trois couches superposées (halo,
+  langues extérieures, cœur incandescent) vacillant à des rythmes différents ;
+  en 3D particules plus grosses, plus nombreuses, avec dérive latérale et
+  mélange additif plafonné à `FLAME_MAX_OPACITY` pour éviter la saturation.
+- Les murs avant et arrière du plateau 3D épousent les bords bas et haut
+  réellement visibles à l'écran (`edgeFloorZ`) : les dés sont lancés depuis le
+  bas de l'écran et peuvent rouler jusqu'en haut.
 - Panneau « Tests » du header : force 3, 4 ou 5 dés identiques via
   `forceCombination`, qui garantit exactement la taille demandée (les autres dés
   sont répartis sur les faces restantes). En 2D le lancer est animé normalement.

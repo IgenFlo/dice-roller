@@ -33,10 +33,13 @@ const GRID_MIN_SPACING = DIE_SIZE * 1.05
 const AURA_DURATION_MS = 1200
 const LOCK_SPRITE_SIZE = 0.62
 const LOCK_HEIGHT_ABOVE_DIE = 0.85
-const FLAME_SPAWN_INTERVAL_S = 0.045
-const FLAME_TTL_S = 0.65
-const FLAME_RISE_SPEED = 1.5
-const FLAME_BASE_SCALE = 0.5
+const FLAME_SPAWN_INTERVAL_S = 0.05
+const FLAME_TTL_S = 0.7
+// Le mélange additif sature vite : on plafonne l'opacité de chaque particule.
+const FLAME_MAX_OPACITY = 0.8
+const FLAME_RISE_SPEED = 2.1
+const FLAME_BASE_SCALE = 0.85
+const FLAME_DRIFT_SPEED = 0.45
 
 interface DiceScene3DProps {
   dice: Die[]
@@ -73,6 +76,8 @@ interface FlameParticle {
   sprite: THREE.Sprite
   life: number
   riseSpeed: number
+  driftX: number
+  driftZ: number
 }
 
 interface FlameEmission {
@@ -183,7 +188,10 @@ interface GridLayout {
 // La grille doit tenir entre les murs : sur un écran étroit on réduit le nombre
 // de colonnes, puis l'espacement, pour que les dés ne se chevauchent jamais.
 function computeGridLayout(context: SceneContext, count: number): GridLayout {
-  const halfDepth = Math.min(AREA_DEPTH / 2, Math.abs(context.walls.back.position.z))
+  const halfDepth = Math.min(
+    Math.abs(context.walls.front.position.z),
+    Math.abs(context.walls.back.position.z),
+  )
   const columnsFittingWidth = Math.floor((2 * context.halfWidth - DIE_SIZE) / GRID_SPACING) + 1
   const columns = Math.max(1, Math.min(count, GRID_MAX_COLUMNS, columnsFittingWidth))
   const rows = Math.ceil(count / columns)
@@ -218,19 +226,24 @@ function spawnFlame(context: SceneContext, position: CANNON.Vec3, colors: readon
       color: colors[Math.floor(Math.random() * colors.length)],
       transparent: true,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
     }),
   )
   sprite.position.set(
-    position.x + (Math.random() - 0.5) * DIE_SIZE,
-    position.y - DIE_SIZE / 4,
-    position.z + (Math.random() - 0.5) * DIE_SIZE,
+    position.x + (Math.random() - 0.5) * DIE_SIZE * 1.2,
+    position.y - DIE_SIZE / 3,
+    position.z + (Math.random() - 0.5) * DIE_SIZE * 1.2,
   )
-  sprite.scale.set(FLAME_BASE_SCALE * 0.8, FLAME_BASE_SCALE, 1)
+  const scale = FLAME_BASE_SCALE * (0.75 + Math.random() * 0.5)
+  sprite.scale.set(scale * 0.8, scale, 1)
+  sprite.userData.scale = scale
   context.scene.add(sprite)
   context.activeFlames.push({
     sprite,
     life: 0,
     riseSpeed: FLAME_RISE_SPEED * (0.7 + Math.random() * 0.6),
+    driftX: (Math.random() - 0.5) * FLAME_DRIFT_SPEED,
+    driftZ: (Math.random() - 0.5) * FLAME_DRIFT_SPEED,
   })
 }
 
@@ -263,10 +276,13 @@ function advanceFlames(context: SceneContext, deltaSeconds: number): void {
       flame.sprite.material.dispose()
       return false
     }
+    flame.sprite.position.x += flame.driftX * deltaSeconds
     flame.sprite.position.y += flame.riseSpeed * deltaSeconds
-    const shrink = 1 - progress * 0.55
-    flame.sprite.scale.set(FLAME_BASE_SCALE * 0.8 * shrink, FLAME_BASE_SCALE * shrink, 1)
-    flame.sprite.material.opacity = 1 - progress ** 2
+    flame.sprite.position.z += flame.driftZ * deltaSeconds
+    // La flamme s'épanouit puis s'étire en s'affinant vers le haut.
+    const scale = flame.sprite.userData.scale * (1 + progress * 0.35) * (1 - progress * 0.5)
+    flame.sprite.scale.set(scale * 0.75, scale * 1.25, 1)
+    flame.sprite.material.opacity = FLAME_MAX_OPACITY * (1 - progress ** 2)
     return true
   })
 }
@@ -296,15 +312,15 @@ function arrangeDiceInGrid(context: SceneContext, dice: readonly Die[]): void {
   })
 }
 
-// Position du mur du fond : là où le bord haut du canvas coupe le plateau à
-// hauteur de dé, pour que les dés puissent occuper toute la zone jusqu'au header.
-function topEdgeFloorZ(camera: THREE.PerspectiveCamera): number {
+// Profondeur à laquelle un bord du canvas (ndcY = 1 en haut, -1 en bas) coupe le
+// plateau : les murs épousent ainsi la zone réellement visible à l'écran.
+function edgeFloorZ(camera: THREE.PerspectiveCamera, ndcY: number): number {
   const raycaster = new THREE.Raycaster()
-  raycaster.setFromCamera(new THREE.Vector2(0, 1), camera)
+  raycaster.setFromCamera(new THREE.Vector2(0, ndcY), camera)
   const diePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -DIE_SIZE / 2)
   const intersection = new THREE.Vector3()
   const hit = raycaster.ray.intersectPlane(diePlane, intersection)
-  return hit === null ? -AREA_DEPTH / 2 : intersection.z
+  return hit === null ? (-ndcY * AREA_DEPTH) / 2 : intersection.z
 }
 
 function bodyQuaternion(body: CANNON.Body): THREE.Quaternion {
@@ -338,7 +354,7 @@ function launchDie(context: SceneContext, body: CANNON.Body, settings: ThrowSett
   body.position.set(
     (Math.random() - 0.5) * context.halfWidth * 1.2,
     1.2 + Math.random() * 1.5,
-    AREA_DEPTH / 2 - 0.9,
+    context.walls.front.position.z - DIE_SIZE,
   )
   body.velocity.set(
     (Math.random() - 0.5) * 6 * settings.launchPower,
@@ -491,7 +507,8 @@ export function DiceScene3D({
       context.halfWidth = Math.min(MAX_HALF_WIDTH, (AREA_DEPTH / 2) * camera.aspect * 0.85)
       walls.left.position.set(-context.halfWidth, 0, 0)
       walls.right.position.set(context.halfWidth, 0, 0)
-      walls.back.position.set(0, 0, topEdgeFloorZ(camera))
+      walls.back.position.set(0, 0, edgeFloorZ(camera, 1))
+      walls.front.position.set(0, 0, edgeFloorZ(camera, -1))
     }
     applySize(container.clientWidth, container.clientHeight)
     const resizeObserver = new ResizeObserver(entries => {

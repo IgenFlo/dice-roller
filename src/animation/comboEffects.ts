@@ -9,8 +9,9 @@ export const COMBO_FLAME_COLORS: Readonly<Record<ComboTier, readonly [string, st
   quint: ['#5ec8ff', '#1e5bff'],
 };
 
+/** Nombre de particules de flamme émises par dé et par bouffée (rendu 3D). */
 export const COMBO_FLAME_INTENSITY: Readonly<Record<ComboTier, number>> = {
-  triple: 1,
-  quad: 2,
-  quint: 2,
+  triple: 2,
+  quad: 3,
+  quint: 3,
 };
