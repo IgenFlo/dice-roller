@@ -71,15 +71,32 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Le détail des conditions n'apparaît qu'à partir du desktop, faute de place. */
+/* Le détail des conditions n'apparaît que sur grand écran : un téléphone en
+   paysage est large mais n'a pas la hauteur pour cette ligne supplémentaire. */
 .yams-chance-hint {
   display: none;
   font-size: 11px;
   color: var(--color-text-muted);
 }
 
-@media (min-width: 700px) {
+@media (min-width: 700px) and (min-height: 560px) {
   .yams-chance-hint {
     display: block;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .yams-panel {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .yams-obtained li,
+  .yams-chance-line {
+    font-size: 12px;
+  }
+
+  .yams-chance {
+    padding: 4px 10px;
   }
 }

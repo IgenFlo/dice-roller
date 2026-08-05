@@ -2,7 +2,13 @@
   position: relative;
   flex: 1;
   align-self: stretch;
-  min-height: 240px;
+  min-height: 200px;
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .dice-scene-3d {
+    min-height: 120px;
+  }
 }
 
 .dice-scene-3d canvas {

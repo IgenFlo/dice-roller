@@ -156,6 +156,21 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
 - Le détail du blocage n'est affiché qu'à partir de 700 px de large ; sur
   téléphone seuls le nom et le pourcentage restent visibles.
 
+## Itération 8 (2026-08-05) — paysage sur téléphone
+
+- `#root` en `height: 100svh` + `overflow: hidden` : header, zone de dés et
+  footer tiennent ensemble dans l'écran, la zone de dés absorbe l'espace restant
+  et le bloc latéral défile.
+- En paysage court (`orientation: landscape` et `max-height: 560px`), `.app-main`
+  passe en deux colonnes : dés à gauche, total/Yam's/historique à droite. Header,
+  footer, dés, bouton de lancer et pastilles sont compactés.
+- Taille des dés dégressive : 96 px → 68 px (largeur ≤ 700 px) → 60 px
+  (hauteur ≤ 780 px) → 50 px (paysage court).
+- Le détail des conditions Yam's exige désormais 700 px de large **et** 560 px de
+  haut : un téléphone en paysage est large mais trop court.
+- Les contraintes responsive sont consignées dans `CLAUDE.md` à la racine, à
+  vérifier à chaque changement d'interface.
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).

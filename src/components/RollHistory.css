@@ -39,3 +39,10 @@
   font-weight: 700;
   color: var(--color-text);
 }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .roll-history-entry {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+}

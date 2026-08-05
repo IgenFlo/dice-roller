@@ -17,3 +17,10 @@
   font-size: 34px;
   font-weight: 700;
 }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .roll-total-value {
+    min-height: 30px;
+    font-size: 25px;
+  }
+}

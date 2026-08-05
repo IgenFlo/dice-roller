@@ -31,3 +31,12 @@
     padding: 16px;
   }
 }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .roll-button {
+    width: auto;
+    min-width: 180px;
+    padding: 9px 28px;
+    font-size: 16px;
+  }
+}

@@ -14,9 +14,21 @@
   background: var(--color-bg);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
   :root {
-    --die-size: 76px;
+    --die-size: 68px;
+  }
+}
+
+@media (max-height: 780px) {
+  :root {
+    --die-size: 60px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  :root {
+    --die-size: 50px;
   }
 }
 
@@ -28,10 +40,13 @@ body {
   margin: 0;
 }
 
+/* Hauteur fixe : header, zone de dés et footer tiennent ensemble dans l'écran,
+   c'est la zone de dés qui absorbe l'espace restant. */
 #root {
-  min-height: 100svh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 button {

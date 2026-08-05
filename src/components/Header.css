@@ -159,3 +159,33 @@
     font-size: 13px;
   }
 }
+
+/* Paysage sur téléphone : le header doit rester une bande fine. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .header {
+    gap: 6px 14px;
+    padding: 5px 10px;
+  }
+
+  .header-toggle,
+  .header-reset,
+  .header-settings summary {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .header-counter button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .die-appearance-picker-field input {
+    width: 32px;
+    height: 32px;
+  }
+
+  .header-settings-panel {
+    max-height: 70svh;
+    overflow-y: auto;
+  }
+}
