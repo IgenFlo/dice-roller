@@ -12,17 +12,13 @@ import { RollButton } from './components/RollButton'
 import { RollHistory } from './components/RollHistory'
 import { RollTotal } from './components/RollTotal'
 import { YamsPanel } from './components/YamsPanel'
-import {
-  findCombo,
-  forceCombination,
-  keepComboOnHeldDice,
-  type Combo,
-} from './domain/combos'
+import { findCombo, keepComboOnHeldDice, type Combo } from './domain/combos'
 import { setDiceValues, sumDice, type Die } from './domain/dice'
 import { YAMS_DICE_COUNT } from './domain/yams'
-import { DEFAULT_DIE_APPEARANCE, type DieAppearance } from './domain/dieAppearance'
+import type { DieAppearance } from './domain/dieAppearance'
 import { useDiceGame } from './hooks/useDiceGame'
 import { useDiceThrow } from './hooks/useDiceThrow'
+import { loadPreferences, savePreferences } from './storage/preferences'
 import './App.css'
 
 const DiceScene3D = lazy(() =>
@@ -34,11 +30,16 @@ interface ComboEffect {
   key: number
 }
 
+// Lues une seule fois au chargement : ensuite l'état React fait autorité.
+const initialPreferences = loadPreferences()
+
 function App() {
   const { dice, rollCount, history, roll, applyRollResult, toggleDieHold, setDiceCount, reset } =
-    useDiceGame()
-  const [appearance, setAppearance] = useState<DieAppearance>(DEFAULT_DIE_APPEARANCE)
-  const [animationMode, setAnimationMode] = useState<AnimationMode>('2d')
+    useDiceGame(initialPreferences.diceCount)
+  const [appearance, setAppearance] = useState<DieAppearance>(initialPreferences.appearance)
+  const [animationMode, setAnimationMode] = useState<AnimationMode>(
+    initialPreferences.animationMode,
+  )
   const [throwSettings, setThrowSettings] = useState<ThrowSettings>(DEFAULT_THROW_SETTINGS)
   const [throwRequest3d, setThrowRequest3d] = useState(0)
   const [recenterRequest3d, setRecenterRequest3d] = useState(0)
@@ -99,15 +100,6 @@ function App() {
     revealCombo(setDiceValues(dice, values))
   }
 
-  const handleForceCombination = (comboSize: number) => {
-    if (isThrowing) return
-    clearComboEffect()
-    const values = forceCombination(dice, comboSize)
-    applyRollResult(values)
-    // En 2D l'animation de lancer révélera la combinaison à son terme.
-    if (animationMode === '3d') revealCombo(setDiceValues(dice, values))
-  }
-
   const handleReset = () => {
     if (isThrowing) return
     clearComboEffect()
@@ -128,6 +120,10 @@ function App() {
   useEffect(() => {
     handleRollRef.current = handleRoll
   })
+
+  useEffect(() => {
+    savePreferences({ diceCount: dice.length, appearance, animationMode })
+  }, [dice.length, appearance, animationMode])
 
   useEffect(() => {
     const rollOnSpaceBar = (event: KeyboardEvent) => {
@@ -157,7 +153,6 @@ function App() {
         controlsDisabled={isThrowing}
         throwSettings={throwSettings}
         onThrowSettingsChange={setThrowSettings}
-        onForceCombination={handleForceCombination}
       />
       <main className="app-main">
         <div className="app-dice-area" ref={arenaRef}>

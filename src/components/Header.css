@@ -58,19 +58,6 @@
   background: var(--color-bg);
 }
 
-.header-tests-label {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
-.header-tests-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .header-settings-panel {
   position: absolute;
   top: calc(100% + 8px);

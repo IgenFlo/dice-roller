@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  DEFAULT_DICE_COUNT,
   createDice,
   resizeDice,
   rollDice,
@@ -25,8 +24,8 @@ interface DiceGame {
   reset: () => void
 }
 
-export function useDiceGame(): DiceGame {
-  const [dice, setDice] = useState<Die[]>(() => createDice(DEFAULT_DICE_COUNT))
+export function useDiceGame(initialDiceCount: number): DiceGame {
+  const [dice, setDice] = useState<Die[]>(() => createDice(initialDiceCount))
   const [rollCount, setRollCount] = useState(0)
   const [history, setHistory] = useState<RollHistoryEntry[]>([])
 

@@ -1,4 +1,4 @@
-import { FACE_COUNT, randomFaceValue, type Die, type RandomSource } from './dice';
+import type { Die } from './dice';
 
 export type ComboTier = 'triple' | 'quad' | 'quint';
 
@@ -7,12 +7,6 @@ export const COMBO_SIZES: Readonly<Record<ComboTier, number>> = {
   quad: 4,
   quint: 5,
 };
-
-export const TESTABLE_COMBO_SIZES: readonly number[] = [
-  COMBO_SIZES.triple,
-  COMBO_SIZES.quad,
-  COMBO_SIZES.quint,
-];
 
 export interface Combo {
   readonly tier: ComboTier;
@@ -54,25 +48,4 @@ export function keepComboOnHeldDice(combo: Combo, dice: readonly Die[]): Combo |
   const heldIds = new Set(dice.filter(die => die.isHeld).map(die => die.id));
   const dieIds = combo.dieIds.filter(dieId => heldIds.has(dieId));
   return dieIds.length === 0 ? null : { ...combo, dieIds };
-}
-
-/**
- * Valeurs garantissant exactement `comboSize` dés identiques : les dés restants
- * sont répartis sur les autres faces pour ne jamais former un groupe plus grand.
- */
-export function forceCombination(
-  dice: readonly Die[],
-  comboSize: number,
-  random: RandomSource = Math.random,
-): Record<number, number> {
-  const comboValue = randomFaceValue(random);
-  const fillerValues = Array.from({ length: FACE_COUNT }, (_, index) => index + 1).filter(
-    value => value !== comboValue,
-  );
-  return Object.fromEntries(
-    dice.map((die, index) => [
-      die.id,
-      index < comboSize ? comboValue : fillerValues[(index - comboSize) % fillerValues.length],
-    ]),
-  );
 }

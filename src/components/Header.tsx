@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { ThrowSettings } from '../animation/throwSettings'
-import { TESTABLE_COMBO_SIZES } from '../domain/combos'
 import { MAX_DICE_COUNT, MIN_DICE_COUNT } from '../domain/dice'
 import type { DieAppearance } from '../domain/dieAppearance'
 import { AnimationSettings } from './AnimationSettings'
@@ -17,7 +16,6 @@ interface HeaderProps {
   controlsDisabled: boolean
   throwSettings: ThrowSettings
   onThrowSettingsChange: (settings: ThrowSettings) => void
-  onForceCombination: (comboSize: number) => void
 }
 
 export function Header({
@@ -30,7 +28,6 @@ export function Header({
   controlsDisabled,
   throwSettings,
   onThrowSettingsChange,
-  onForceCombination,
 }: HeaderProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -83,25 +80,6 @@ export function Header({
                   settings={throwSettings}
                   onSettingsChange={onThrowSettingsChange}
                 />
-              </div>
-            </details>
-            <details className="header-settings" name="header-panel">
-              <summary>Tests</summary>
-              <div className="header-settings-panel">
-                <span className="header-tests-label">Forcer une combinaison</span>
-                <div className="header-tests-buttons">
-                  {TESTABLE_COMBO_SIZES.map(comboSize => (
-                    <button
-                      key={comboSize}
-                      type="button"
-                      className="header-reset"
-                      disabled={controlsDisabled || diceCount < comboSize}
-                      onClick={() => onForceCombination(comboSize)}
-                    >
-                      {comboSize} identiques
-                    </button>
-                  ))}
-                </div>
               </div>
             </details>
             <button

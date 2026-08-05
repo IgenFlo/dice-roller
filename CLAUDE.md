@@ -1,7 +1,12 @@
 # dice-roller
 
-Lanceur de dés à 6 faces. Aucun compte, aucune persistance : chaque ouverture
-repart aux paramètres par défaut.
+Lanceur de dés à 6 faces. Aucun compte, aucun serveur.
+
+Seules les **préférences d'affichage** (nombre de dés, couleurs du dé, mode
+2D/3D) survivent d'une visite à l'autre, dans le `localStorage` de l'appareil
+(`src/storage/preferences.ts`). L'**état de partie** — valeurs des dés, dés
+bloqués, historique, réglages d'animation — reste volatil : chaque ouverture
+repart d'une table vierge.
 
 Spécification détaillée et historique des itérations :
 `docs/superpowers/specs/2026-08-02-dice-roller-design.md`.

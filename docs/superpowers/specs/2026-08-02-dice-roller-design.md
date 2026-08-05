@@ -2,15 +2,16 @@
 
 ## Objectif
 
-Site web permettant de lancer des dés à 6 faces. Aucun compte, aucune persistance :
-chaque ouverture repart aux paramètres par défaut (1 dé).
+Site web permettant de lancer des dés à 6 faces. Aucun compte, aucun serveur :
+seules les préférences d'affichage sont conservées localement (itération 10),
+l'état de partie repart de zéro à chaque ouverture.
 
 ## Comportement
 
 - À l'ouverture, l'interface est directement visible avec 1 dé affichant la face 1.
 - Header repliable, replié par défaut : ne montrent alors que le bouton
   « Réglages » et « Recentrer ». Déplié, il affiche tous les contrôles
-  (nombre de dés, couleurs, panneaux Animation et Tests, Réinitialiser).
+  (nombre de dés, couleurs, panneau Animation, Réinitialiser).
 - Contrôle du nombre de dés (boutons − / +), borné entre 1 et 10.
 - Zone centrale : les dés occupent tout l'espace entre header et footer, centrés.
 - Footer : bouton « Lancer les dés ».
@@ -135,6 +136,7 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
 - Panneau « Tests » du header : force 3, 4 ou 5 dés identiques via
   `forceCombination`, qui garantit exactement la taille demandée (les autres dés
   sont répartis sur les faces restantes). En 2D le lancer est animé normalement.
+  *Retiré à l'itération 10, les effets étant validés.*
 
 ## Itération 7 (2026-08-05) — analyse Yam's (5 dés)
 
@@ -195,6 +197,21 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
   faisait se chevaucher : la profondeur visible arbitre les deux.
 - La colonne des dés bloqués se dédouble quand le plateau est trop plat pour les
   empiler (`heldColumnLayout`), au lieu de les faire se chevaucher.
+
+## Itération 10 (2026-08-06) — préférences locales
+
+- `src/storage/preferences.ts` conserve dans le `localStorage`, sous la clé
+  `dice-roller.preferences`, les seuls réglages d'affichage : nombre de dés,
+  couleurs du dé, mode 2D/3D. L'état de partie (valeurs, blocages, historique)
+  et les réglages d'animation restent volatils.
+- Lecture unique au chargement du module, écriture par effet dès qu'un des trois
+  réglages change. Chaque champ relu est validé isolément (entier dans les
+  bornes, couleur `#rrggbb`, mode connu) et retombe sur son défaut : un stockage
+  édité à la main ou écrit par une version antérieure ne peut pas casser l'app.
+- Tout accès au stockage est encadré : navigation privée ou cookies bloqués
+  dégradent silencieusement vers les valeurs par défaut.
+- Panneau « Tests » supprimé du header, avec `forceCombination` et
+  `TESTABLE_COMBO_SIZES` devenus orphelins.
 
 ## Hors périmètre MVP (itérations futures préparées)
 
