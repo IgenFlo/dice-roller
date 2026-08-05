@@ -84,6 +84,11 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
 - Un dé bloqué porte un cadenas flottant au-dessus de lui (sprite billboardé
   teinté de la couleur des points, semi-transparent pour laisser lire les
   points), à la place de l'anneau au sol.
+- Les dés bloqués quittent le plateau : ils s'alignent en colonne sur le bord
+  gauche, face visible = leur valeur. La zone de jeu (`playArea`) se réduit
+  d'autant — lancers et grille de rangement s'y adaptent. Débloquer un dé le
+  repose à l'emplacement libre le plus central du plateau ; un dé qui se
+  trouvait là où la colonne apparaît est déplacé de la même façon.
 - Le résultat n'est validé que si TOUS les dés lancés sont immobiles ET lisibles :
   face supérieure quasi horizontale (`alignment > 0.96`) et posée au sol
   (`y < 0.85 × taille du dé`, donc pas en équilibre sur un autre dé).

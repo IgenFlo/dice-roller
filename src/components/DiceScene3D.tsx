@@ -25,6 +25,10 @@ const FLAT_ALIGNMENT_MIN = 0.96
 const ON_FLOOR_MAX_Y = DIE_SIZE * 0.85
 const WALL_VISIBILITY_MARGIN = 0.15
 const MIN_DAMPING = 0.02
+// Colonne des dés bloqués, réservée sur le bord gauche dès qu'un dé est bloqué.
+const HELD_COLUMN_MARGIN = 0.2
+const HELD_COLUMN_WIDTH = DIE_SIZE * 1.7
+const HELD_COLUMN_SPACING = DIE_SIZE * 1.35
 const GRID_SPACING = 1.5
 const GRID_MAX_COLUMNS = 5
 const GRID_MIN_SPACING = DIE_SIZE * 1.05
@@ -99,6 +103,9 @@ interface SceneContext {
   walls: { left: CANNON.Body; right: CANNON.Body; back: CANNON.Body; front: CANNON.Body }
   sceneDice: Map<number, SceneDie>
   halfWidth: number
+  /** Zone de jeu utile en x, amputée de la colonne des dés bloqués. */
+  playArea: { minX: number; maxX: number }
+  heldCount: number
   activeThrow: ActiveThrow | null
   auraTexture: THREE.CanvasTexture
   activeAuras: ActiveAura[]
@@ -182,22 +189,40 @@ interface GridLayout {
   readonly columns: number
   readonly rows: number
   readonly spacing: number
+  readonly centerX: number
 }
 
-// La grille doit tenir entre les murs : sur un écran étroit on réduit le nombre
-// de colonnes, puis l'espacement, pour que les dés ne se chevauchent jamais.
+function refreshPlayArea(context: SceneContext): void {
+  const reserved = context.heldCount > 0 ? HELD_COLUMN_WIDTH : 0
+  // Sur un écran très étroit, la colonne ne doit pas dévorer toute la zone de jeu.
+  const minX = Math.min(-context.halfWidth + reserved, context.halfWidth - DIE_SIZE)
+  context.playArea = { minX, maxX: context.halfWidth }
+}
+
+function heldColumnX(context: SceneContext): number {
+  return -context.halfWidth + DIE_SIZE / 2 + HELD_COLUMN_MARGIN
+}
+
+// La grille doit tenir dans la zone de jeu : sur un écran étroit on réduit le
+// nombre de colonnes, puis l'espacement, pour que les dés ne se chevauchent pas.
 function computeGridLayout(context: SceneContext, count: number): GridLayout {
   const halfDepth = Math.min(
     Math.abs(context.walls.front.position.z),
     Math.abs(context.walls.back.position.z),
   )
-  const columnsFittingWidth = Math.floor((2 * context.halfWidth - DIE_SIZE) / GRID_SPACING) + 1
+  const availableWidth = context.playArea.maxX - context.playArea.minX
+  const columnsFittingWidth = Math.floor((availableWidth - DIE_SIZE) / GRID_SPACING) + 1
   const columns = Math.max(1, Math.min(count, GRID_MAX_COLUMNS, columnsFittingWidth))
   const rows = Math.ceil(count / columns)
-  const widthSpacing = columns > 1 ? (2 * context.halfWidth - DIE_SIZE) / (columns - 1) : GRID_SPACING
+  const widthSpacing = columns > 1 ? (availableWidth - DIE_SIZE) / (columns - 1) : GRID_SPACING
   const depthSpacing = rows > 1 ? (2 * halfDepth - DIE_SIZE) / (rows - 1) : GRID_SPACING
   const spacing = Math.max(GRID_MIN_SPACING, Math.min(GRID_SPACING, widthSpacing, depthSpacing))
-  return { columns, rows, spacing }
+  return {
+    columns,
+    rows,
+    spacing,
+    centerX: (context.playArea.minX + context.playArea.maxX) / 2,
+  }
 }
 
 function createFlameTexture(): THREE.CanvasTexture {
@@ -286,25 +311,89 @@ function gridPosition(index: number, layout: GridLayout): { x: number; z: number
   const column = index % layout.columns
   const row = Math.floor(index / layout.columns)
   return {
-    x: (column - (layout.columns - 1) / 2) * layout.spacing,
+    x: layout.centerX + (column - (layout.columns - 1) / 2) * layout.spacing,
     z: (row - (layout.rows - 1) / 2) * layout.spacing,
   }
 }
 
+/** Pose un dé à plat sur sa valeur, immobile : la face vue reste celle du domaine. */
+function restDieAt(sceneDie: SceneDie, value: number, x: number, z: number): void {
+  sceneDie.body.position.set(x, DIE_SIZE / 2, z)
+  const orientation = quaternionForValueUp(value)
+  sceneDie.body.quaternion.set(orientation.x, orientation.y, orientation.z, orientation.w)
+  sceneDie.body.velocity.setZero()
+  sceneDie.body.angularVelocity.setZero()
+  // Sans mise en sommeil, le moindre contact résiduel relance la simulation.
+  sceneDie.body.sleep()
+}
+
+function arrangeHeldDice(context: SceneContext, heldDice: readonly Die[]): void {
+  const backZ = context.walls.back.position.z
+  const frontZ = context.walls.front.position.z
+  const centerZ = (backZ + frontZ) / 2
+  const usableDepth = frontZ - backZ - DIE_SIZE
+  const spacing =
+    heldDice.length > 1
+      ? Math.min(HELD_COLUMN_SPACING, usableDepth / (heldDice.length - 1))
+      : HELD_COLUMN_SPACING
+
+  heldDice.forEach((die, index) => {
+    const sceneDie = context.sceneDice.get(die.id)
+    if (sceneDie === undefined) return
+    const z = centerZ + (index - (heldDice.length - 1) / 2) * spacing
+    restDieAt(sceneDie, die.value, heldColumnX(context), z)
+  })
+}
+
 function arrangeDiceInGrid(context: SceneContext, dice: readonly Die[]): void {
-  const layout = computeGridLayout(context, dice.length)
-  dice.forEach((die, index) => {
+  const heldDice = dice.filter(die => die.isHeld)
+  const looseDice = dice.filter(die => !die.isHeld)
+  context.heldCount = heldDice.length
+  refreshPlayArea(context)
+  arrangeHeldDice(context, heldDice)
+
+  const layout = computeGridLayout(context, looseDice.length)
+  looseDice.forEach((die, index) => {
     const sceneDie = context.sceneDice.get(die.id)
     if (sceneDie === undefined) return
     const { x, z } = gridPosition(index, layout)
-    sceneDie.body.position.set(x, DIE_SIZE / 2, z)
-    const orientation = quaternionForValueUp(die.value)
-    sceneDie.body.quaternion.set(orientation.x, orientation.y, orientation.z, orientation.w)
-    sceneDie.body.velocity.setZero()
-    sceneDie.body.angularVelocity.setZero()
-    // Sans mise en sommeil, le moindre contact résiduel relance la simulation.
-    sceneDie.body.sleep()
+    restDieAt(sceneDie, die.value, x, z)
   })
+}
+
+/** Emplacement libre le plus central de la zone de jeu, pour un dé qu'on débloque. */
+function freeBoardPosition(
+  context: SceneContext,
+  occupiedIds: ReadonlySet<number>,
+): { x: number; z: number } {
+  const backZ = context.walls.back.position.z
+  const frontZ = context.walls.front.position.z
+  const centerX = (context.playArea.minX + context.playArea.maxX) / 2
+  const centerZ = (backZ + frontZ) / 2
+  const occupied = [...context.sceneDice.values()]
+    .filter(sceneDie => occupiedIds.has(sceneDie.id))
+    .map(sceneDie => sceneDie.body.position)
+
+  const steps = 7
+  const spanX = context.playArea.maxX - context.playArea.minX - DIE_SIZE
+  const spanZ = frontZ - backZ - DIE_SIZE
+  const candidates: { x: number; z: number; distance: number }[] = []
+  for (let column = 0; column < steps; column++) {
+    for (let row = 0; row < steps; row++) {
+      const x = context.playArea.minX + DIE_SIZE / 2 + (column / (steps - 1)) * spanX
+      const z = backZ + DIE_SIZE / 2 + (row / (steps - 1)) * spanZ
+      candidates.push({ x, z, distance: Math.hypot(x - centerX, z - centerZ) })
+    }
+  }
+  candidates.sort((first, second) => first.distance - second.distance)
+
+  const minDistance = DIE_SIZE * 1.25
+  const free = candidates.find(candidate =>
+    occupied.every(
+      position => Math.hypot(candidate.x - position.x, candidate.z - position.z) >= minDistance,
+    ),
+  )
+  return free ?? { x: centerX, z: centerZ }
 }
 
 // Profondeur à laquelle un bord du canvas (ndcY = 1 en haut, -1 en bas) coupe un
@@ -354,8 +443,9 @@ function launchDie(context: SceneContext, body: CANNON.Body, settings: ThrowSett
   // même avec la friction réglée à zéro.
   body.linearDamping = MIN_DAMPING + 0.05 * settings.friction
   body.angularDamping = MIN_DAMPING + 0.08 * settings.friction
+  const spawnSpan = Math.max(0, context.playArea.maxX - context.playArea.minX - DIE_SIZE)
   body.position.set(
-    (Math.random() - 0.5) * context.halfWidth * 1.2,
+    context.playArea.minX + DIE_SIZE / 2 + Math.random() * spawnSpan,
     1.2 + Math.random() * 1.5,
     context.walls.front.position.z - DIE_SIZE,
   )
@@ -395,6 +485,7 @@ export function DiceScene3D({
   const onRollResolvedRef = useRef(onRollResolved)
   const lastThrowRequestRef = useRef(throwRequestCount)
   const lastRecenterRequestRef = useRef(recenterRequestCount)
+  const previouslyHeldRef = useRef<ReadonlySet<number>>(new Set())
   const skipNextValueSyncRef = useRef(false)
 
   useEffect(() => {
@@ -492,6 +583,8 @@ export function DiceScene3D({
       walls,
       sceneDice: new Map(),
       halfWidth: AREA_DEPTH / 2,
+      playArea: { minX: -AREA_DEPTH / 2, maxX: AREA_DEPTH / 2 },
+      heldCount: 0,
       activeThrow: null,
       auraTexture: createAuraTexture(),
       activeAuras: [],
@@ -512,6 +605,7 @@ export function DiceScene3D({
       walls.right.position.set(context.halfWidth, 0, 0)
       walls.back.position.set(0, 0, backWallZ(camera))
       walls.front.position.set(0, 0, edgeFloorZ(camera, -1, DIE_SIZE / 2))
+      refreshPlayArea(context)
     }
     applySize(container.clientWidth, container.clientHeight)
     const resizeObserver = new ResizeObserver(entries => {
@@ -678,6 +772,7 @@ export function DiceScene3D({
       context.sceneDice.set(die.id, { id: die.id, mesh, lock, body })
     }
     arrangeDiceInGrid(context, currentDice)
+    previouslyHeldRef.current = new Set(currentDice.filter(die => die.isHeld).map(die => die.id))
   }, [diceIdsKey])
 
   const valuesKey = dice.map(die => `${die.id}:${die.value}`).join('-')
@@ -720,7 +815,10 @@ export function DiceScene3D({
   useEffect(() => {
     const context = contextRef.current
     if (context === null) return
-    for (const die of diceRef.current) {
+    const currentDice = diceRef.current
+    const heldDice = currentDice.filter(die => die.isHeld)
+
+    for (const die of currentDice) {
       const sceneDie = context.sceneDice.get(die.id)
       if (sceneDie === undefined) continue
       sceneDie.lock.visible = die.isHeld
@@ -728,6 +826,32 @@ export function DiceScene3D({
       sceneDie.body.velocity.setZero()
       sceneDie.body.angularVelocity.setZero()
     }
+
+    context.heldCount = heldDice.length
+    refreshPlayArea(context)
+
+    // Doivent retrouver une place : les dés qu'on vient de débloquer, et ceux qui
+    // se trouvaient là où la colonne vient d'apparaître.
+    const needsBoardSpot = currentDice.filter(die => {
+      if (die.isHeld) return false
+      if (previouslyHeldRef.current.has(die.id)) return true
+      const body = context.sceneDice.get(die.id)?.body
+      return body !== undefined && body.position.x < context.playArea.minX + DIE_SIZE / 2
+    })
+    const relocatedIds = new Set(needsBoardSpot.map(die => die.id))
+    const occupiedIds = new Set(
+      currentDice.filter(die => !die.isHeld && !relocatedIds.has(die.id)).map(die => die.id),
+    )
+    for (const die of needsBoardSpot) {
+      const sceneDie = context.sceneDice.get(die.id)
+      if (sceneDie === undefined) continue
+      const { x, z } = freeBoardPosition(context, occupiedIds)
+      restDieAt(sceneDie, die.value, x, z)
+      occupiedIds.add(die.id)
+    }
+
+    arrangeHeldDice(context, heldDice)
+    previouslyHeldRef.current = new Set(heldDice.map(die => die.id))
   }, [heldKey])
 
   useEffect(() => {
