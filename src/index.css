@@ -28,7 +28,7 @@
 
 @media (orientation: landscape) and (max-height: 560px) {
   :root {
-    --die-size: 50px;
+    --die-size: 76px;
   }
 }
 

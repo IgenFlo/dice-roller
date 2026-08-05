@@ -7,7 +7,7 @@
 
 @media (orientation: landscape) and (max-height: 560px) {
   .dice-scene-3d {
-    min-height: 120px;
+    min-height: 100px;
   }
 }
 

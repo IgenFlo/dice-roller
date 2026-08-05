@@ -30,3 +30,15 @@
   opacity: 0.5;
   cursor: default;
 }
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .animation-mode-toggle {
+    top: 2px;
+    right: 2px;
+  }
+
+  .animation-mode-toggle button {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+}

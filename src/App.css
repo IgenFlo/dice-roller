@@ -60,21 +60,22 @@
    pour que header, dés et footer tiennent ensemble. */
 @media (orientation: landscape) and (max-height: 560px) {
   .app-main {
-    gap: 8px;
-    padding: 8px 12px;
+    gap: 6px;
+    padding: 6px 10px;
   }
 
+  /* Le total passe en surimpression : toute la hauteur revient aux dés. */
   .app-dice-area {
-    --yams-rail-width: 92px;
+    --yams-rail-width: 88px;
 
-    gap: 10px;
+    gap: 0;
   }
 
   .app-scene-fallback {
-    min-height: 120px;
+    min-height: 100px;
   }
 
   .app-footer {
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
   }
 }

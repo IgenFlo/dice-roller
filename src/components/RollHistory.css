@@ -40,9 +40,23 @@
   color: var(--color-text);
 }
 
+/* En paysage l'historique se réduit à une bande de pastilles : les totaux se
+   lisent sans titre, et la hauteur gagnée revient aux dés. */
 @media (orientation: landscape) and (max-height: 560px) {
+  .roll-history {
+    gap: 0;
+  }
+
+  .roll-history-title {
+    display: none;
+  }
+
+  .roll-history-list {
+    padding-bottom: 0;
+  }
+
   .roll-history-entry {
-    padding: 4px 10px;
-    font-size: 12px;
+    padding: 3px 9px;
+    font-size: 11px;
   }
 }

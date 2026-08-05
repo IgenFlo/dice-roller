@@ -18,9 +18,25 @@
   font-weight: 700;
 }
 
+/* En paysage le total se pose dans le coin haut gauche, au-dessus du bandeau,
+   pour ne plus consommer de hauteur dans le flux. */
 @media (orientation: landscape) and (max-height: 560px) {
+  .roll-total {
+    position: absolute;
+    top: 0;
+    left: 0;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .roll-total-label {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
   .roll-total-value {
-    min-height: 30px;
-    font-size: 25px;
+    min-height: 0;
+    font-size: 20px;
   }
 }

@@ -28,8 +28,13 @@ ou les panneaux d'information doit être relue à travers cette liste.
 - `#root` est en `height: 100svh` avec `overflow: hidden` : c'est la zone de dés
   qui absorbe l'espace, et le bloc latéral (total, analyse Yam's, historique)
   qui défile si nécessaire — jamais du contenu tronqué en silence.
-- En paysage court (`orientation: landscape` et `max-height: 560px`), la mise en
-  page passe en deux colonnes : les dés à gauche, les informations à droite.
+- En paysage court (`orientation: landscape` et `max-height: 560px`), **la hauteur
+  est la ressource rare** : la barre du navigateur peut ne laisser que ~280 px.
+  Tout ce qui n'est pas les dés doit alors céder la place — le total passe en
+  surimpression dans un coin, l'historique se réduit à une bande de pastilles
+  sans titre, et les dés grossissent (76 px) au lieu de rétrécir.
+- Ne jamais empiler des blocs pleine largeur sous les dés en paysage : chaque
+  bloc coûte directement de la taille de dé.
 
 ### 3. Aucune perte d'information ni dégradation fonctionnelle
 

@@ -167,8 +167,13 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
   dés (tirage courant à gauche, probabilités à droite). Leur largeur est réservée
   en `padding-inline`, donc ils ne recouvrent ni les dés ni le canvas 3D :
   104 px sur desktop, 68 px sous 700 px de large, 92 px en paysage court.
-- Taille des dés dégressive : 96 px → 68 px (largeur ≤ 700 px) → 60 px
-  (hauteur ≤ 780 px) → 50 px (paysage court).
+- Taille des dés : 96 px → 68 px (largeur ≤ 700 px) → 60 px (hauteur ≤ 780 px)
+  → 76 px en paysage court, où l'espace récupéré est rendu aux dés.
+- Optimisation du paysage (2026-08-05, après test sur iPhone) : le total passe en
+  surimpression dans le coin haut gauche et l'historique perd son titre pour se
+  réduire à une bande de pastilles. 86 px de hauteur rendus à la zone de dés,
+  dés agrandis de 52 % ; le pire cas mesuré (280 px de viewport sous Safari)
+  tient désormais.
 - Le détail des conditions Yam's exige désormais 700 px de large **et** 560 px de
   haut : un téléphone en paysage est large mais trop court.
 - Les contraintes responsive sont consignées dans `CLAUDE.md` à la racine, à
