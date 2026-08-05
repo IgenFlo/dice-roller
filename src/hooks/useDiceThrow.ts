@@ -61,7 +61,6 @@ export function useDiceThrow(
     lastSeenRollCountRef.current = rollCount
     const arena = arenaRef.current
     if (!isNewRoll || arena === null) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const arenaRect = arena.getBoundingClientRect()
     const slots = new Map<number, DieSlot>()

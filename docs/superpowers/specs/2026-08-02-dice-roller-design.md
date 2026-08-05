@@ -53,7 +53,9 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
   douceur vers la grille dé par dé (chaque dé révèle sa vraie valeur à son arrêt).
 - Le résultat vient toujours du domaine ; l'animation est purement présentationnelle.
 - Contrôles (lancer, nombre de dés, reset, clic sur dé) désactivés pendant le lancer.
-- `prefers-reduced-motion` : résultat affiché instantanément, sans animation.
+- `prefers-reduced-motion` n'est volontairement pas respecté : l'animation du lancer
+  est le cœur du produit (décision du 2026-08-05, l'OS de l'utilisateur a
+  « Réduire les animations » activé) ; un réglage in-app reste possible plus tard.
 - L'approche 3D (three.js + cannon-es, textures générées depuis les couleurs
   custom, permutation des faces pour respecter le tirage du domaine) reste cadrée
   comme itération possible.
