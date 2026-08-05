@@ -22,7 +22,8 @@ const COCKED_RETHROW_DELAY_MS = 5000
 const FLAT_ALIGNMENT_MIN = 0.96
 const ON_FLOOR_MAX_Y = DIE_SIZE * 0.85
 const GRID_SPACING = 1.5
-const GRID_COLUMNS = 5
+const GRID_MAX_COLUMNS = 5
+const GRID_MIN_SPACING = DIE_SIZE * 1.05
 const AURA_DURATION_MS = 1200
 const LOCK_SPRITE_SIZE = 0.62
 const LOCK_HEIGHT_ABOVE_DIE = 0.85
@@ -144,27 +145,47 @@ function advanceAuras(context: SceneContext, now: number): void {
   })
 }
 
-function gridPosition(index: number, count: number): { x: number; z: number } {
-  const columns = Math.min(count, GRID_COLUMNS)
-  const rows = Math.ceil(count / GRID_COLUMNS)
-  const column = index % GRID_COLUMNS
-  const row = Math.floor(index / GRID_COLUMNS)
+interface GridLayout {
+  readonly columns: number
+  readonly rows: number
+  readonly spacing: number
+}
+
+// La grille doit tenir entre les murs : sur un écran étroit on réduit le nombre
+// de colonnes, puis l'espacement, pour que les dés ne se chevauchent jamais.
+function computeGridLayout(context: SceneContext, count: number): GridLayout {
+  const halfDepth = Math.min(AREA_DEPTH / 2, Math.abs(context.walls.back.position.z))
+  const columnsFittingWidth = Math.floor((2 * context.halfWidth - DIE_SIZE) / GRID_SPACING) + 1
+  const columns = Math.max(1, Math.min(count, GRID_MAX_COLUMNS, columnsFittingWidth))
+  const rows = Math.ceil(count / columns)
+  const widthSpacing = columns > 1 ? (2 * context.halfWidth - DIE_SIZE) / (columns - 1) : GRID_SPACING
+  const depthSpacing = rows > 1 ? (2 * halfDepth - DIE_SIZE) / (rows - 1) : GRID_SPACING
+  const spacing = Math.max(GRID_MIN_SPACING, Math.min(GRID_SPACING, widthSpacing, depthSpacing))
+  return { columns, rows, spacing }
+}
+
+function gridPosition(index: number, layout: GridLayout): { x: number; z: number } {
+  const column = index % layout.columns
+  const row = Math.floor(index / layout.columns)
   return {
-    x: (column - (columns - 1) / 2) * GRID_SPACING,
-    z: (row - (rows - 1) / 2) * GRID_SPACING,
+    x: (column - (layout.columns - 1) / 2) * layout.spacing,
+    z: (row - (layout.rows - 1) / 2) * layout.spacing,
   }
 }
 
 function arrangeDiceInGrid(context: SceneContext, dice: readonly Die[]): void {
+  const layout = computeGridLayout(context, dice.length)
   dice.forEach((die, index) => {
     const sceneDie = context.sceneDice.get(die.id)
     if (sceneDie === undefined) return
-    const { x, z } = gridPosition(index, dice.length)
+    const { x, z } = gridPosition(index, layout)
     sceneDie.body.position.set(x, DIE_SIZE / 2, z)
     const orientation = quaternionForValueUp(die.value)
     sceneDie.body.quaternion.set(orientation.x, orientation.y, orientation.z, orientation.w)
     sceneDie.body.velocity.setZero()
     sceneDie.body.angularVelocity.setZero()
+    // Sans mise en sommeil, le moindre contact résiduel relance la simulation.
+    sceneDie.body.sleep()
   })
 }
 
@@ -488,7 +509,7 @@ export function DiceScene3D({
     context.sceneDice.clear()
 
     const currentDice = diceRef.current
-    currentDice.forEach((die, index) => {
+    for (const die of currentDice) {
       const mesh = new THREE.Mesh(context.dieGeometry, createDieMaterials(appearanceRef.current))
       mesh.castShadow = true
       mesh.userData.dieId = die.id
@@ -510,15 +531,11 @@ export function DiceScene3D({
         material: context.diceMaterial,
         type: die.isHeld ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC,
       })
-      const { x, z } = gridPosition(index, currentDice.length)
-      body.position.set(x, DIE_SIZE / 2, z)
-      const orientation = quaternionForValueUp(die.value)
-      body.quaternion.set(orientation.x, orientation.y, orientation.z, orientation.w)
-
       context.scene.add(mesh, lock)
       context.world.addBody(body)
       context.sceneDice.set(die.id, { id: die.id, mesh, lock, body })
-    })
+    }
+    arrangeDiceInGrid(context, currentDice)
   }, [diceIdsKey])
 
   const valuesKey = dice.map(die => `${die.id}:${die.value}`).join('-')

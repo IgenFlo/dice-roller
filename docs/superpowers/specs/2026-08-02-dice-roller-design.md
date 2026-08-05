@@ -86,6 +86,10 @@ Le lancer simule un jet réel en vue de dessus, sans 3D ni dépendance :
   (`y < 0.85 × taille du dé`, donc pas en équilibre sur un autre dé).
 - Un dé « cassé » (de travers, empilé, ou encore en mouvement) est automatiquement
   relancé au bout de 5 s ; le délai repart à zéro à chaque relance.
+- La grille de rangement (création des dés, recentrage) s'adapte à la largeur
+  réelle du plateau : nombre de colonnes puis espacement réduits pour tenir entre
+  les murs sur écran étroit. Les dés rangés sont endormis (`body.sleep()`) pour
+  qu'aucun contact résiduel ne les fasse rouler.
 
 ## Hors périmètre MVP (itérations futures préparées)
 
