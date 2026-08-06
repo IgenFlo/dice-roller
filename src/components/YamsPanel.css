@@ -55,21 +55,53 @@
   flex-direction: column;
 }
 
-/* Tous les objectifs sont listés : la colonne défile quand ils débordent. Elle
-   est la seule partie du HUD à capter le pointeur, les dés restent cliquables
-   partout ailleurs. */
+/* Tous les objectifs sont listés. La liste reste traversante comme le reste du
+   HUD : elle ne défile que par les flèches, seuls éléments à capter le pointeur.
+   L'ascenseur natif est masqué, il serait inattrapable. */
 .yams-rail--right .yams-rail-list {
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.yams-rail--right .yams-rail-list::-webkit-scrollbar {
+  display: none;
+}
+
+.yams-rail-scroll {
+  flex: none;
   pointer-events: auto;
-  scrollbar-width: thin;
+  text-shadow: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-surface);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  transition: background-color 0.15s, opacity 0.15s;
+}
+
+.yams-rail-scroll:hover:enabled {
+  background: var(--color-bg);
+}
+
+.yams-rail-scroll:disabled {
+  opacity: 0.3;
 }
 
 @media (max-width: 700px) {
   .yams-rail {
     font-size: 11px;
     line-height: 1.35;
+  }
+
+  .yams-rail-scroll {
+    width: 30px;
+    height: 30px;
   }
 }
 
@@ -85,6 +117,15 @@
 
   .yams-rail-title {
     font-size: 9px;
+  }
+
+  /* La hauteur est rare : les flèches se compactent sans descendre sous une
+     cible tapable. */
+  .yams-rail-scroll {
+    width: 30px;
+    height: 24px;
+    border-radius: 7px;
+    font-size: 10px;
   }
 }
 

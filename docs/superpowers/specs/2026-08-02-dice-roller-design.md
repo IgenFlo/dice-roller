@@ -264,10 +264,14 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
 - Le bandeau « Prochain lancer » n'est plus tronqué aux trois meilleures
   combinaisons : tous les objectifs encore atteignables sont listés par
   probabilité décroissante (9 à 12 entrées selon le tirage).
-- La liste devient la seule partie du HUD à capter le pointeur
-  (`pointer-events: auto`, `min-height: 0`, `overflow-y: auto`) pour pouvoir
-  défiler. Le bandeau gauche reste traversant : la colonne des dés bloqués en 3D
-  se trouve juste en dessous et doit rester cliquable.
+- La liste défile (`min-height: 0`, `overflow-y: auto`) mais **reste
+  traversante** : deux flèches collées à droite, au-dessus et au-dessous, sont
+  les seuls éléments à capter le pointeur, et les dés restent cliquables sous le
+  HUD. L'ascenseur natif est masqué — il serait inattrapable.
+- Les flèches n'apparaissent que si la liste déborde, et chacune se désactive à
+  son extrémité. Elles mesurent 32 px (30 px sous 700 px de large, 30 × 24 px en
+  paysage court) et défilent de 80 % de la hauteur visible, en gardant une ligne
+  de repère. Un nouveau tirage ramène la liste en haut.
 
 ## Hors périmètre MVP (itérations futures préparées)
 
