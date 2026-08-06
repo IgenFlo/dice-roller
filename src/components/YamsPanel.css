@@ -55,6 +55,17 @@
   flex-direction: column;
 }
 
+/* Tous les objectifs sont listés : la colonne défile quand ils débordent. Elle
+   est la seule partie du HUD à capter le pointeur, les dés restent cliquables
+   partout ailleurs. */
+.yams-rail--right .yams-rail-list {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  scrollbar-width: thin;
+}
+
 @media (max-width: 700px) {
   .yams-rail {
     font-size: 11px;

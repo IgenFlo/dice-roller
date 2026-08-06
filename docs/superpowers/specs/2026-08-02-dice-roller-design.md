@@ -259,6 +259,16 @@ Avec exactement 5 dés, après chaque lancer révélé (`YamsPanel`) :
 - `src/storage/localStore.ts` factorise l'accès tolérant au `localStorage`,
   partagé par les préférences et les photos.
 
+## Itération 13 (2026-08-06) — liste complète des probabilités
+
+- Le bandeau « Prochain lancer » n'est plus tronqué aux trois meilleures
+  combinaisons : tous les objectifs encore atteignables sont listés par
+  probabilité décroissante (9 à 12 entrées selon le tirage).
+- La liste devient la seule partie du HUD à capter le pointeur
+  (`pointer-events: auto`, `min-height: 0`, `overflow-y: auto`) pour pouvoir
+  défiler. Le bandeau gauche reste traversant : la colonne des dés bloqués en 3D
+  se trouve juste en dessous et doit rester cliquable.
+
 ## Hors périmètre MVP (itérations futures préparées)
 
 - Couleurs, animations de lancer, customisation des dés (couleurs, nombre de faces).

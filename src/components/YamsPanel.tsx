@@ -8,8 +8,6 @@ interface YamsPanelProps {
   dice: Die[]
 }
 
-const DISPLAYED_CHANCES = 3
-
 function formatPercentage(probability: number): string {
   return `${(probability * 100).toFixed(2).replace('.', ',')} %`
 }
@@ -28,7 +26,7 @@ export function YamsPanel({ dice }: YamsPanelProps) {
     const values = valuesKey.split('-').map(Number)
     return {
       obtained: findObtainedCombinations(values),
-      chances: bestNextRollChances(values).slice(0, DISPLAYED_CHANCES),
+      chances: bestNextRollChances(values),
     }
   }, [valuesKey])
 

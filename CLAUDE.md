@@ -74,6 +74,10 @@ ou les panneaux d'information doit être relue à travers cette liste.
   un jeu : `position: absolute`, `pointer-events: none`, halo de texte pour rester
   lisibles, et **les dés roulent dessous**. Ils ne doivent jamais réserver de
   place dans le flux : la zone de dés garde toute sa largeur.
+  Seule exception : la liste du bandeau droit reprend `pointer-events: auto` pour
+  pouvoir défiler, tous les objectifs y étant listés. Le bandeau gauche doit
+  rester traversant — la colonne des dés bloqués en 3D est juste en dessous et
+  doit rester cliquable.
 
 ### 4. Scène 3D
 
